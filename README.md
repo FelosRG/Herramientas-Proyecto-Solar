@@ -1,25 +1,21 @@
-# Librerías desarrolladas para el proyecto de predicción solar.
+# Herramientas y librerías para el desarrollo del proyecto de predicción de recurso solar.
 
-todas las librerias se encuentran dentro del directorio /lib
+<b> !!! No hacer publico el código pues contiene credenciales privadas para algunas APIs !!!</b> <br> <br>
+Recopilación de las herramientas adquiridas y desarrolladas para el proyecto solar, así como guías para su funcionamiento y uso.
 
-### Liberías para trabajar con imágenes del los satélites GOES 16/17
+### Contenido
 
-<li type="circle"> <b> geo.py </b> <br> 
-  &emsp;  Contiene funciones destinadas a la localización geográfica dentro de una imágen de los satélites GOES-16/17.</li>
+<li type="circle"> <b> libGEOS </b> <br> 
+  &emsp;  Contiene las liberías desarrolladas para trabajar con las imágenes satélitales. </li>
   
-<li type="circle"> <b> localidades.py </b> <br> 
-  &emsp;  Contiene funciones destinadas a la localización geográfica dentro de una imágen de los satélites GOES-16/17.</li>
+<li type="circle"> <b> libNSRDB </b> <br> 
+  &emsp;  Contiene las liberías desarrolladas para descargar y trabajar con los datos del NSRDB.</li>
   
-<li type="circle"> <b> plot.py </b> <br> 
-  &emsp;  Contiene funciones para la visualización de las imágenes.
+<li type="circle"> <b> Shapefiles </b> <br> 
+  &emsp;  Contiene archivos con información geométrica reelevante para la generación de mapas y visualizaciónes. 
   
-<li type="circle"> <b> ftp.py </b> <br> 
-  &emsp;  Contiene funciones destinadas a la descarga de datos satélitales por medio del portal CLASS de la NOAA mediante el portocolo FTP </li>
-  
-### Librerías para trabajar con la base de datos de la radiación solar (National Solar Radiation Database)
+ 
+### Instalación de las liberías requeridas
 
 ...
 
-### Librerías para trabajar con los datos de GFS (Global Forecast System)
-
-...
