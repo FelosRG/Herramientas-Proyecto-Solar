@@ -6,10 +6,15 @@ Created on Sat Jul 17 21:07:12 2021
 @author: felos
 """
 import os
+import re
+import s3fs
 import math
 import time
 import datetime
-import numpy as np
+from   datetime import datetime , timedelta
+
+import numpy  as np
+import pandas as pd
 import scipy.ndimage
 import matplotlib.pyplot as plt
 
@@ -572,3 +577,126 @@ def preProcesado_WS(nc_WS,nc_ref,dx=1,reducción=50,rellenar_faltantes=True):
     # Aplico correción de signo a WS_lat , o se el motivo pero parec encajar mucho mejor
     # con las ímagenes satelitales con el negativo.
     return -WS_lat , WS_lon
+
+# FUNCIONES PARA DESCARGA POR LOS AWS BUCKETS --------------------------
+
+def _identificarBandas(df_files):
+    """
+    Le añade la información de a que banda pertence cada archivo, dado el nombre de un
+    archivo netCDF diretamente descargado del los servidores usando regular expressions.
+    """
+    
+    Bandas = []
+    
+    for line in df_files["file"]:
+        file_name = str(line)
+    
+        # Obtenemos los indices donde se encuentra la información de la banda. -M6C%%_
+        match  = re.search(r"-M6C\d\d_",file_name)
+        span   = match.span()
+
+        # Número de banda. (En string)
+        banda = file_name[span[1]-3:span[1]-1]
+
+        Bandas.append(int(banda))
+    
+    df_files["Banda"] = Bandas
+    return df_files
+
+
+def _goes_file_df(satellite, product, start, end, refresh=True):
+    """
+    Get list of requested GOES files as pandas.DataFrame.
+    Parameters
+    ----------
+    satellite : str
+    product : str
+    start : datetime
+    end : datetime
+    refresh : bool
+        Refresh the s3fs.S3FileSystem object when files are listed.
+        Default True will refresh and not use a cached list.
+    """
+    fs = s3fs.S3FileSystem(anon=True)
+    
+    DATES = pd.date_range(f"{start:%Y-%m-%d %H:00}", f"{end:%Y-%m-%d %H:00}", freq="1H")
+
+    # List all files for each date
+    # ----------------------------
+    files = []
+    for DATE in DATES:
+        files += fs.ls(f"{satellite}/{product}/{DATE:%Y/%j/%H/}", refresh=refresh)
+
+    # Build a table of the files
+    # --------------------------
+    df = pd.DataFrame(files, columns=["file"])
+    df[["start", "end", "creation"]] = (
+        df["file"].str.rsplit("_", expand=True, n=3).loc[:, 1:]
+    )
+
+    # Filter files by requested time range
+    # ------------------------------------
+    # Convert filename datetime string to datetime object
+    df["start"] = pd.to_datetime(df.start, format="s%Y%j%H%M%S%f")
+    df["end"] = pd.to_datetime(df.end, format="e%Y%j%H%M%S%f")
+    df["creation"] = pd.to_datetime(df.creation, format="c%Y%j%H%M%S%f.nc")
+
+    # Filter by files within the requested time range
+    df = df.loc[df.start >= start].loc[df.end <= end].reset_index(drop=True)
+
+    return df
+
+
+def datosActualesGOES16(producto,
+                        banda=None,
+                        output_name="GOES-descarga.nc"):
+    """
+    
+    Descarga los datos más recientes de las categorias ingresadas, desde datos alojados en AWS.
+    Los guarda en formato netCDF bajo el mismo nombre por los que se sobrescriben los datos.
+    
+    Cuando el producto es de clase ABI-L1b-RadC es necesario introducir la bada
+    que se desea descargar.
+    
+    Basado en proyecto goes2go : https://github.com/blaylockbk/goes2go/
+    
+    LA FUNCIÓN SIGUE EN DESAROLLO, SOLO USAR CON PRODUCTOS EN EL DOMINIO DE CONUS.
+    """
+    
+    # Nos conectamos a los servidores con credencial anónima. 
+    fs = s3fs.S3FileSystem(anon=True)
+    
+    # Lista de productos
+    lista_productos = fs.ls(f"noaa-goes16")
+    
+    # Revisamos si el producto solicitado está en la lista de productos disponibles.
+    #assert(producto in lista_productos,f"El nombre del producto debe de ser {lista_productos}")
+    
+    # Obtenemos el intervalo de tiempo en el que buscaremos los archivos. (Hora UTC)
+    start = datetime.utcnow() - timedelta(hours=1)
+    end = datetime.utcnow()
+    
+
+    # Obtenemos el dataframe con los elementos más recientes de cada banda.
+    df = _goes_file_df(satellite="noaa-goes16",product=producto,start=start,end=end)
+    df = df.loc[df.start == df.start.max()].reset_index(drop=True)
+
+    # Identificamos cada archivo con la banda a la que corresponde.
+    if producto == "ABI-L1b-RadC":
+        assert  type(banda) != int, "No se introdujo la banda que se desea descargar."
+        df = _identificarBandas(df)
+        df = df[df["Banda"] == banda]
+    
+    #assert(len(df) > 0,"No se encontraron archivos.")
+    if len(df) > 1 : 
+        print("Aviso: Se encontró más de un archivo, solo se descargará el primero.")
+        print(df,"\n")
+        file_name = df["file"].values[0]
+    else:
+        # Obtenemos el nombre del archivo a descargar.
+        file_name = df["file"].values[0]
+    
+    
+    # Descarga de los datos.
+    fs.get(file_name,output_name)
+    print("Descargar completa.")
