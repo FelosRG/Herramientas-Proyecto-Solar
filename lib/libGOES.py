@@ -11,7 +11,7 @@ import s3fs
 import math
 import time
 import datetime
-from   datetime import datetime , timedelta
+from   datetime import date, datetime , timedelta
 
 import numpy  as np
 import pandas as pd
@@ -125,9 +125,13 @@ def descargarOrden_CLASS(num_orden,verbose=False,path_salida=""):
     print("Descarga completada!")
 
 
-def obtenerFecha_GOES(nc):
+def obtenerFecha_GOES(nc,return_datetime=False):
     """ Devuelve un string con la fecha de la imágen.
         
+        return_datetime (bool): Si está en True, devuelve
+        .. la fecha como objeto datetime. De lo contrario
+        .. lo devuelve como string.
+
         !! Falta hacer que devuelva la hora en formato de 24h
 
         !! Falta implementar que de la hora para otras zonas
@@ -135,15 +139,21 @@ def obtenerFecha_GOES(nc):
     """
     
     # Obtiene los segundos desde 2000-01-01 12:00
-    t = float(np.array(nc.variables["t"]))
+    try:
+        t = float(np.array(nc.variables["t"]))
+    except:
+        t = float(np.array(nc.variables["time"])[0])
+
     
     # Con ayuda de la librería "datetime" obtenemos la fecha actual.
-    fecha_inicio = datetime.datetime(2000,1,1,0,0,0)
-    time_delta   = datetime.timedelta(seconds=t)
-
+    fecha_inicio = datetime(2000,1,1,12,0,0)
+    time_delta   = timedelta(seconds=t)
     fecha        = fecha_inicio + time_delta
-    formato      = "%Y-%m-%d_%H-%M"
-    return fecha.strftime(formato)
+    if return_datetime:
+        return fecha
+    else:
+        formato      = "%Y-%m-%d_%H-%M"
+        return fecha.strftime(formato)
 
 def obtenerBanda_GOES(nc):
     """ Obtiene de que banda es el archivo nc correspondiente a el producto de
@@ -647,6 +657,72 @@ def _goes_file_df(satellite, product, start, end, refresh=True):
     return df
 
 
+def descargaIntervaloGOES16(producto,
+                            datetime_inicio,
+                            datetime_final,
+                            banda=None,
+                            output_path="NETCDF_DATA/"):
+
+    # Creamos el directorio si no existe.
+    output_path = output_path + producto + "/"
+    Path(output_path).mkdir(parents=True, exist_ok=True)
+
+
+    # Nos conectamos a los servidores con credencial anónima. 
+    fs = s3fs.S3FileSystem(anon=True)
+    
+    # Lista de productos
+    lista_productos = fs.ls(f"noaa-goes16")
+
+    # Asignamos fecha
+    start = datetime_inicio
+    end   = datetime_final
+
+    # Obtenemos el dataframe con los elementos más recientes de cada banda.
+    df = _goes_file_df(satellite="noaa-goes16",product=producto,start=start,end=end,refresh=True)
+
+    # Identificamos cada archivo con la banda a la que corresponde.
+    if banda != None:
+        df = _identificarBandas(df)
+        df = df[df["Banda"] == banda]
+
+    descargados = 0
+    a_descargar = len(df)
+
+    # Descarga de los datos.
+    for index in range(a_descargar):
+        
+        descarga_correcta = False
+
+        file_name = df["file"].values[index]
+        match  = re.search(r"OR_ABI.+",file_name)
+        span   = match.span()
+        output_name = file_name[span[0]:span[1]]
+
+        # Si ya existe el archivo, continuamos.
+        objeto_path = Path(output_path + output_name)
+        if objeto_path.is_file():
+            descargados += 1
+            continue
+
+        while descarga_correcta == False:
+            try:
+                fs.get(file_name, output_path + output_name,)
+            except KeyboardInterrupt:
+                raise
+            except:
+                print("Error en la descarga, volviendo a intentar.")
+                time.sleep(5)
+            else:
+                descarga_correcta = True
+                descargados += 1
+        print(f"Archivo descargado : \n{output_name}")
+        print(f"Descargados {descargados} de {a_descargar}","\n")
+
+    print("Descargar completa.")
+
+
+
 def datosActualesGOES16(producto,
                         banda=None,
                         output_name="GOES-descarga.nc"):
@@ -657,7 +733,7 @@ def datosActualesGOES16(producto,
     
     Cuando el producto es de clase ABI-L1b-RadC es necesario introducir la bada
     que se desea descargar.
-    
+
     Basado en proyecto goes2go : https://github.com/blaylockbk/goes2go/
     
     LA FUNCIÓN SIGUE EN DESAROLLO, SOLO USAR CON PRODUCTOS EN EL DOMINIO DE CONUS.
@@ -674,7 +750,7 @@ def datosActualesGOES16(producto,
     
     # Obtenemos el intervalo de tiempo en el que buscaremos los archivos. (Hora UTC)
     start = datetime.utcnow() - timedelta(hours=1)
-    end = datetime.utcnow()
+    end   = datetime.utcnow()
     
 
     # Obtenemos el dataframe con los elementos más recientes de cada banda.
@@ -682,8 +758,7 @@ def datosActualesGOES16(producto,
     df = df.loc[df.start == df.start.max()].reset_index(drop=True)
 
     # Identificamos cada archivo con la banda a la que corresponde.
-    if producto == "ABI-L1b-RadC":
-        assert  type(banda) != int, "No se introdujo la banda que se desea descargar."
+    if banda != None:
         df = _identificarBandas(df)
         df = df[df["Banda"] == banda]
     

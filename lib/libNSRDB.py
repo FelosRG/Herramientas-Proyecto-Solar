@@ -2,12 +2,15 @@ import pandas as pd
 import numpy  as np
 import math
 
-def getData(lat,lon,year,intervalo=60):
+def getData(lat,lon,year,intervalo=60,UTC=False):
     " Función que obtiene los datos de un único punto."
     
     api_key    = "gfYiPMGMLLOMK6h8PcSp2102kPZrFFwFIqp5vSM9"
     interval   =  intervalo
-    utc        = 'false'
+    if UTC:
+    	utc = "true"
+    else:
+    	utc = 'false'
     email      = 'felos@ciencias.unam.mx'
     # Se ocupa la url_base adecuada para el tipo de intervalo.
     if intervalo >= 30:
