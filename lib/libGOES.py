@@ -239,12 +239,17 @@ def px2coordinates_GOES(nc,px_x,px_y):
 def coordinates2px_GOES(nc,latitud,longitud):
     """Pasa de coordenadas a localización en px."""
     # Parámetros del satélite.
+
+    # Alternativa rápida a no tener que dar el nc.
+    try:
+        X , Y , lambda_o = nc
+    except ValueError:
+        # Fixed Grid scanning angles.
+        X = nc.variables["x"]
+        Y = nc.variables["y"]
+        # Longitud of proyection of the origin
+        lambda_o = nc.variables["goes_imager_projection"].longitude_of_projection_origin
     
-    # Fixed Grid scanning angles.
-    X = nc.variables["x"]
-    Y = nc.variables["y"]
-    # Longitud of proyection of the origin
-    lambda_o = nc.variables["goes_imager_projection"].longitude_of_projection_origin
     lambda_o = degree2rad(lambda_o)
     # Semi major axis value
     r_eq   = 6378137          # [m]
@@ -321,19 +326,19 @@ def cmap_banda13_GOES():
         (escala de temperaturas)"""
     
     inicio = -110
-    final  = 57
+    final  = 40
     dt     = final - inicio
     
     ini_gist_yarg = -110
-    fin_gist_yarg = -68
+    fin_gist_yarg = -78
     dy            = fin_gist_yarg - ini_gist_yarg
     
-    ini_hsv = -68
-    fin_hsv = -52
+    ini_hsv = -78
+    fin_hsv = -45
     dh = fin_hsv - ini_hsv
     
-    ini_ocean = -52
-    fin_ocean = -43
+    ini_ocean = -45
+    fin_ocean = -30
     do = fin_ocean - ini_ocean
     
     long_yarg = int(256*dy/dt)
@@ -349,11 +354,10 @@ def cmap_banda13_GOES():
     gist_yarg_parte  = gist_yarg(np.linspace(0,1,long_yarg  ))
     hsv_parte        =       hsv(np.linspace(0,0.29,long_hsv ))
     ocean_parte      =     ocean(np.linspace(0,1,long_do    ))
-    binary_parte     =    binary(np.linspace(0,1,long_db    ))
+    binary_parte     =    binary(np.linspace(0.5,1,long_db    ))
     
     custom_cmap_array = np.concatenate([gist_yarg_parte,hsv_parte,ocean_parte,binary_parte])
-    
-    custom_cmap = ListedColormap(custom_cmap_array)
+    custom_cmap       = ListedColormap(custom_cmap_array)
     
     return custom_cmap
     
@@ -481,8 +485,36 @@ def latlonArray(nc,data_path="PreCompute/",enviar_0_0 = True):
     return lats , lons
 
 
+def preProcesado_WS(nc_WS):
+    """
+    Procesa los datos para la realización de un quiver plot.
+    Devueve como lista las componentes de los vectores de viento
+    junto con la lista de lat,lons.
+
+    Ojo, son listas no son arrays !!
+    """
+    FILL_VALUE = -999.0
+    lat = np.array(nc_WS.variables["lat"])
+    lon = np.array(nc_WS.variables["lon"])
+    ws  = np.array(nc_WS.variables["wind_speed"])
+    wd  = np.array(nc_WS.variables["wind_direction"])
+    
+    if np.max(ws) == FILL_VALUE:
+        print("Aviso: No hay valores validos de ws.")
+        
+    # Mandamos a 0 los valores inválidos.
+    ws[ws == FILL_VALUE] = 0
+    
+    # Obtenemos las componentes de los vectores.
+    wd = np.radians(360 - wd)
+    ws_lat = -np.cos(wd)*ws
+    ws_lon = np.sin(wd)*ws
+    
+    return lat,lon,ws_lat,ws_lon
+
+
 # Funciones para el proecesamiento del wind-speed.----------------
-def preProcesado_WS(nc_WS,nc_ref,dx=1,reducción=50,rellenar_faltantes=True):
+def preProcesado_WS_Interpolación(nc_WS,nc_ref,dx=1,reducción=50,rellenar_faltantes=True):
     """
     Toma un archivo nc que contiene la información de la velocidad de viento, 
     y lo adapta a las dimenciones de los datos que estan en el archivo nc de 
@@ -544,7 +576,7 @@ def preProcesado_WS(nc_WS,nc_ref,dx=1,reducción=50,rellenar_faltantes=True):
     # Pasamos primero de grados a radianes, tomando en cuenta que N=0°,E=90°
     wd_list = np.radians(360 - wd_list) 
     # Obtenemos las componentes del vector de dirección.
-    ws_lat_list = np.cos(wd_list)*ws_list
+    ws_lat_list = -np.cos(wd_list)*ws_list
     ws_lon_list = np.sin(wd_list)*ws_list
 
     print("Promedio WS: ", np.mean(ws_list)) # --- > Métrica, promedio de la velocidad de viento.
