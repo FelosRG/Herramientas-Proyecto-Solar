@@ -1,6 +1,6 @@
 # Herramientas y librerías para el desarrollo del proyecto de predicción de recurso solar.
 
-<b> !!! No hacer publico el código pues contiene credenciales privadas para algunas APIs !!!</b> <br> <br>
+<b> !!!Nota para Adrián : Revisar que el código no contenga API-keys privadas antes de actualizar!!!</b> <br> <br>
 Recopilación de las herramientas adquiridas y desarrolladas para el proyecto solar, así como guías para su funcionamiento y uso.
 
 ### Contenido
@@ -14,7 +14,22 @@ Recopilación de las herramientas adquiridas y desarrolladas para el proyecto so
 <li type="circle"> <b> Shapefiles </b> <br> 
   &emsp;  Contiene archivos con información geométrica reelevante para la generación de mapas y visualizaciónes. 
   
- 
+### Registro para la descarga de datos del NSRDB
+
+Para poder descargar los datos del NSRDB es necesario registrarse en https://developer.nrel.gov/signup/ <br>
+Una vez registrado hay que guardar la clave del API.
+  
+Esta clave del api la escribimos en <b>libNSRDB.py</b> al principio del archivo en la carpeta <b> lib </b> <br>
+ Tambien es importante rellenar el campo de email.
+
+ ```
+# -------------------------------------------------------------
+# Rellenar.
+api_key = ""   --> Aquí va su clave del API
+email   = ""
+# -------------------------------------------------------------
+```
+
 ### Instalación de las liberías requeridas
 Se requieren tener instaladas algunas librerías de python :
  
@@ -32,8 +47,24 @@ pip3 install netCDF4
 
 Otras liberías requeridas:
 pandas, numpy, matpotlib.
+   
+### Guía rápida libNSRDB :sunny:
+ ```
+libNSRDB.getData(lat,lon,year,intervalo=60,UTC=False):
+    """ Función que obtiene los datos de un único punto.
+        Returna la información en un pandas.Dataframe
+        
+       ! Intervalos válidos : 5 , 10 , 15, 30, 60 (minutos)
+       ! Para los intervalos >=30 , solo los años 2018,2019,2020 son válidos.
+       ! UTC : True , si queremos que los datos los devuelva en hora UTC, False para devolver en hora local.
+    """
+   
+   return df
+```
+<br>
+  
 
-### Guía rápida libGOES
+### Guía rápida libGOES :earth_americas: :artificial_satellite:
 
 <li type="circle"> <b> Obtener la fecha de un netCDF4 Dataset  </b> <br>
 
