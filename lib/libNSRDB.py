@@ -2,16 +2,20 @@ import pandas as pd
 import numpy  as np
 import math
 
+# -------------------------------------------------------------
+# Rellenar.
+api_key = ""
+email   = ""
+# -------------------------------------------------------------
+
+
 def getData(lat,lon,year,intervalo=60,UTC=False):
     " Función que obtiene los datos de un único punto."
-    
-    api_key    = "gfYiPMGMLLOMK6h8PcSp2102kPZrFFwFIqp5vSM9"
     interval   =  intervalo
     if UTC:
     	utc = "true"
     else:
     	utc = 'false'
-    email      = 'felos@ciencias.unam.mx'
     # Se ocupa la url_base adecuada para el tipo de intervalo.
     if intervalo >= 30:
         url_base = "https://developer.nrel.gov/api/solar/nsrdb_psm3_download.csv?"
@@ -31,9 +35,7 @@ def getData(lat,lon,year,intervalo=60,UTC=False):
 def getDataTMY(lat,lon):
     " Función que obtiene los datos de un único punto."
     
-    api_key          = "gfYiPMGMLLOMK6h8PcSp2102kPZrFFwFIqp5vSM9"
     utc              = 'false'
-    email       = 'felos@ciencias.unam.mx'
     url = f'https://developer.nrel.gov/api/nsrdb/v2/solar/psm3-tmy-download.csv?wkt=POINT({lon}%20{lat})&names=tmy-2019&utc={utc}&email={email}&api_key={api_key}'
     return pd.read_csv(url,skiprows=2)
 
