@@ -49,6 +49,9 @@ Otras liberías requeridas:
 pandas, numpy, matpotlib.
    
 ### Guía rápida libNSRDB :sunny:
+
+ <li type="circle"> <b>Descarga de datos del NSRDB </b> <br>
+   
  ```
 libNSRDB.getData(lat,lon,year,intervalo=60,UTC=False):
     """ Función que obtiene los datos de un único punto.
