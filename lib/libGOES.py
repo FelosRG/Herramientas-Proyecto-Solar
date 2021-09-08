@@ -243,7 +243,7 @@ def coordinates2px_GOES(nc,latitud,longitud):
     # Alternativa rápida a no tener que dar el nc.
     try:
         X , Y , lambda_o = nc
-    except ValueError:
+    except:
         # Fixed Grid scanning angles.
         X = nc.variables["x"]
         Y = nc.variables["y"]
