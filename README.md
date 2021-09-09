@@ -29,36 +29,21 @@ api_key = ""   --> Aquí va su clave del API
 email   = ""
 # -------------------------------------------------------------
 ```
-
-### Instalación de las liberías requeridas
-Se requieren tener instalado <b> python3 </b> con las siguientes librerías:
- 
- <li type="circle"> Librería para la descarga de datos y archivos de documentos del GOES. <br>
   
- ```
-pip3 install s3f3
-```
 
- <li type="circle"> Libería para manejar archivos netCDF <br>
+### Instalación de las liberías de python requeridas
   
- ```
-pip3 install netCDF4
-```
-
-<li type="circle"> Para manejar proyecciones (Mercator,Cilindrica,Lambert,etc.) <br>
-
- ```
-pip3 install pyproj
-```
-
-<li type="circle"> Compresión y gurdado eficiente de matrices numpy <br>
-
- ```
-pip3 install h5py
-```
+<li type="circle"> Nos aseguramos de tener instalado pip primero
  
-Otras liberías requeridas:
-pandas, numpy, matplotlib.
+ ```
+sudo apt-get install python3-pip -y
+```
+  
+<li type="circle"> Instalamos las dependencias
+ 
+ ```
+pip3 install -r requeriments.py
+```
    
 ### Guía rápida libNSRDB :sunny:
 
