@@ -58,7 +58,7 @@ pip3 install h5py
 ```
  
 Otras liberías requeridas:
-pandas, numpy, matpotlib.
+pandas, numpy, matplotlib.
    
 ### Guía rápida libNSRDB :sunny:
 
