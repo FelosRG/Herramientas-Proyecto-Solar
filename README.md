@@ -42,7 +42,7 @@ sudo apt-get install python3-pip -y
 <li type="circle"> Instalamos las dependencias
  
  ```
-pip3 install -r requeriments.py
+pip3 install -r requeriments.txt
 ```
    
 ### Guía rápida libNSRDB :sunny:
