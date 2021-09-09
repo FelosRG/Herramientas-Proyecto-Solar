@@ -31,7 +31,7 @@ email   = ""
 ```
 
 ### Instalación de las liberías requeridas
-Se requieren tener instaladas algunas librerías de python :
+Se requieren tener instalado <b> python3 </b> con las siguientes librerías:
  
  <li type="circle"> Librería para la descarga de datos y archivos de documentos del GOES. <br>
   
