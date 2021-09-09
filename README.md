@@ -45,6 +45,18 @@ pip3 install s3f3
 pip3 install netCDF4
 ```
 
+<li type="circle"> Para manejar proyecciones (Mercator,Cilindrica,Lambert,etc.) <br>
+
+ ```
+pip3 install pyproj
+```
+
+<li type="circle"> Compresión y gurdado eficiente de matrices numpy <br>
+
+ ```
+pip3 install h5py
+```
+ 
 Otras liberías requeridas:
 pandas, numpy, matpotlib.
    
