@@ -1,5 +1,7 @@
 # Herramientas y librerías para el desarrollo del proyecto de predicción de recurso solar.
 
+![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/portada_GOES16.jpg?raw=true)
+
 <b> !!!Nota para Adrián : Revisar que el código no contenga API-keys privadas antes de actualizar!!!</b> <br> <br>
 Recopilación de las herramientas adquiridas y desarrolladas para el proyecto solar, así como guías para su funcionamiento y uso.
 
