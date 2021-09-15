@@ -5,12 +5,15 @@ Recopilación de las herramientas adquiridas y desarrolladas para el proyecto so
 
 ### Contenido
 
-<li type="circle"> <b> libGEOS </b> <br> 
-  &emsp;  Contiene las funciones desarrolladas para trabajar con las imágenes satélitales. </li>
+<li type="circle"> <b> libGEOS </b> :earth_americas: :artificial_satellite: <br> 
+  &emsp;  Contiene las funciones desarrolladas para trabajar con las imágenes satélitales del NOAA GOES-16 </li>
   
-<li type="circle"> <b> libNSRDB </b> <br> 
-  &emsp;  Contiene las funciones desarrolladas para descargar y trabajar con los datos del NSRDB.</li>
-  
+<li type="circle"> <b> libNSRDB </b> :sunny: <br> 
+  &emsp;  Contiene las funciones desarrolladas para descargar y trabajar con los datos del National Solar Radiation Database.</li>
+ 
+<li type="circle"> <b> libGFS </b> 	:computer: :sun_behind_large_cloud: <br> 
+  &emsp;  Contiene las funciones desarrolladas para descargar y trabajar con los datos del modelo numérico Global Forecast System </li>
+ 
 <li type="circle"> <b> Shapefiles </b> <br> 
   &emsp;  Contiene archivos con información geométrica reelevante para la generación de mapas y visualizaciónes. 
   
