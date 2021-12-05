@@ -37,7 +37,7 @@ CONFIGURACIÓN:
 
 # Cargamos los datos de la configuración
 print("Cargando archivo de configuración...")
-Lon, Lat , mask = config.cargar_mask_espacial()
+Lat, Lon , mask = config.cargar_mask_espacial()
 
 por_descargar = np.sum(mask)
 descargados   = 0
