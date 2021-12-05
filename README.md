@@ -90,4 +90,88 @@ with h5py.File(nombre_dataset,"r") as dataset:
   variable = dataset["nombre de la variable"][()]
 ```
 
-Todas las variables son numpy arrays 
+Todas las variables se devuelven en numpy arrays <br><br>
+
+
+## Tutorial de generación de dataset
+
+En esta sección está que esperar del dataset generado y como  se puede usar.<br> Para ello vamos a correr el dataset en las siguientes configuraciones
+
+**En config.py** <br>
+Modificamos las siguintes configuraciones como:
+
+```python
+DÍAS = 1        # Para descargar solo un día del año de datos satélitales.
+BANDAS = [4,13] # Pero puede ser cualquier otro par de bandas
+
+# Descargaremos entre las horas de 7am a 7pm hora de méxico
+HORA_INICIO_UTC , MIN_INICIO_UTC = 12 , 00
+HORA_FINAL_UTC  , MIN_FINAL_UTC  = 23 , 59
+
+# Dividimos a la región especificada en un grid 5x5, cada intersección del grid es un lugar de donde se generarán los datos del dataset.
+RESOLUCIÓN = 5
+
+VENTANA_RECORTE = 200
+
+# Las otras configuraciones las dejamos como estan.
+```
+
+Guardamos config.py y ejecutamos los siguientes scripts en el siguiente orden:
+
+* config.py
+* descarga_GOES.py
+* descarga_NSRDB.py
+* pre-procesado.py
+* separador.py
+
+Despues modificamos las configuraciones en **gen_dataset.py**
+
+```python
+# El dataset estará conformado por información de las bandas 4 y 13
+BANDAS  = [4,13]
+
+# Utilizaremos los 200 pixeles de ventana de la ventana de recorte puesta en config.py
+VENTANA = 200 
+
+# Información de los datos del NSRDB que ocuparemos en la generación de nuestro dataset
+DATOS_NSRDB = ["GHI","Solar Zenith Angle","Clearsky GHI"]
+
+# Las otras configuraciones las dejamos como estan.
+```
+
+Guardamos y ejecutamos **gen_dataset.py**, una vez finalizado el procesado tendremos nuestro dataset en **Dasets/Datasets/** llamado<br>
+
+**Ventana_200-Bandas_4_13-Secuencia_1-Resolucion_5-NSRDB.h5**
+
+<br><br>
+
+## Tutorial de visualización del dataset
+
+Ya con el dataset generado movemos el dataset (o lo descargamos a nuestra computadora si se está trabajando en una computadora remota) a una carpeta aparte donde crearemos un script o notebook de python
+
+Con los siguiente:
+
+```python
+
+import h5py
+import matplotlib.pyplot as plt
+
+nombre_dataset = "Ventana_200-Bandas_4_13-Secuencia_1-Resolucion_5-NSRDB.h5"
+with h5py.File(nombre_dataset,"r") as dataset:
+  GHI = dataset["GHI"][()]
+  Banda_4 = dataset["4"][()]
+  Banda_13 = dataset["13"][()]
+ 
+```
+
+
+
+
+
+
+
+
+
+
+
+
