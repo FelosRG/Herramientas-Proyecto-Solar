@@ -138,13 +138,15 @@ def obtenerFecha_GOES(nc,return_datetime=False):
         horarias.
     """
     
-    # Obtiene los segundos desde 2000-01-01 12:00
-    try:
-        t = float(np.array(nc.variables["t"]))
-    except:
-        t = float(np.array(nc.variables["time"])[0])
+    if type(nc) == int: 
+        t = nc
+    else:
+        # Obtiene los segundos desde 2000-01-01 12:00
+        try:
+            t = float(np.array(nc.variables["t"]))
+        except:
+            t = float(np.array(nc.variables["time"])[0])
 
-    
     # Con ayuda de la librería "datetime" obtenemos la fecha actual.
     fecha_inicio = datetime(2000,1,1,12,0,0)
     time_delta   = timedelta(seconds=t)
@@ -243,7 +245,7 @@ def coordinates2px_GOES(nc,latitud,longitud):
     # Alternativa rápida a no tener que dar el nc.
     try:
         X , Y , lambda_o = nc
-    except:
+    except TypeError:
         # Fixed Grid scanning angles.
         X = nc.variables["x"]
         Y = nc.variables["y"]
@@ -277,7 +279,7 @@ def coordinates2px_GOES(nc,latitud,longitud):
     # Revisamos la visiblidad desde el satélite.
     inequality1 = H*(H-s_x)
     inequality2 = s_y**2 + (s_z**2)*(r_eq/r_pool)**2
-    message = "Coordenada no visibles desde el satélite."
+    message = f"Coordenada no visibles desde el satélite: {latitud},{longitud}"
     if inequality1 < inequality2:
         raise ValueError(message)
     
@@ -693,13 +695,12 @@ def descargaIntervaloGOES16(producto,
                             datetime_inicio,
                             datetime_final,
                             banda=None,
-                            output_path="NETCDF_DATA/"):
+                            output_path="NETCDF_DATA/",
+                            verbose=False):
 
     # Creamos el directorio si no existe.
-    output_path = output_path + producto + "/"
     Path(output_path).mkdir(parents=True, exist_ok=True)
-
-
+    
     # Nos conectamos a los servidores con credencial anónima. 
     fs = s3fs.S3FileSystem(anon=True)
     
@@ -748,10 +749,11 @@ def descargaIntervaloGOES16(producto,
             else:
                 descarga_correcta = True
                 descargados += 1
-        print(f"Archivo descargado : \n{output_name}")
-        print(f"Descargados {descargados} de {a_descargar}","\n")
-
-    print("Descargar completa.")
+        if verbose:
+            print(f"Archivo descargado : \n{output_name}")
+            print(f"Descargados {descargados} de {a_descargar}","\n")
+    if verbose:
+        print("Descargar completa.")
 
 
 
@@ -807,3 +809,21 @@ def datosActualesGOES16(producto,
     # Descarga de los datos.
     fs.get(file_name,output_name)
     print("Descargar completa.")
+
+
+def estado_general(nc,variable):
+    """
+    Si el archivo netCDF tiene algún tipo de corrupción,
+    se retorna False (archivo inválido), si no se detécta
+    corrupción se marca como verdadero.
+
+    Se revisan que los datos contengan al menos un valor que no sea
+    fill_value.
+    """
+    fill_value = nc.variables[variable]._FillValue
+    datos = np.array(nc.variables[variable])    
+    if np.min(datos) == fill_value:
+        archivo_valido = False
+    else:
+        archivo_valido = True
+    return archivo_valido

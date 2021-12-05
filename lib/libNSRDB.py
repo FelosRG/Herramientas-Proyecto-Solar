@@ -1,21 +1,30 @@
+# Configuración de usuario.
+API_KEY = None
+EMAIL   = None
+# -------------------------------------------
+
+
 import pandas as pd
 import numpy  as np
 import math
 
-# -------------------------------------------------------------
-# Rellenar.
-api_key = ""
-email   = ""
-# -------------------------------------------------------------
-
+if API_KEY == None:
+    raise ValueError("No se ha ingresado una API-KEY del NSRDB!, es necesario solicitar una y colocarla en lib/libNSRDB.py")
+if EMAIL == None:
+    raise ValueError("No se ha colocado un email en lib/libNSRDB.py")
 
 def getData(lat,lon,year,intervalo=60,UTC=False):
     " Función que obtiene los datos de un único punto."
+
+    api_key    =  API_KEY
     interval   =  intervalo
+
     if UTC:
     	utc = "true"
     else:
     	utc = 'false'
+    
+    email = EMAIL
     # Se ocupa la url_base adecuada para el tipo de intervalo.
     if intervalo >= 30:
         url_base = "https://developer.nrel.gov/api/solar/nsrdb_psm3_download.csv?"
@@ -24,18 +33,19 @@ def getData(lat,lon,year,intervalo=60,UTC=False):
         url_base = "https://developer.nrel.gov/api/nsrdb/v2/solar/psm3-5min-download.csv?"
     parametros = f"wkt=POINT({lon}%20{lat})&names={year}&interval={interval}&utc={utc}&email={email}&api_key={api_key}"
     url = url_base + parametros
-    
     try:
     	df_data = pd.read_csv(url,skiprows=2)
     except:
-    	print(f"Link fallido: {url}")
-    	raise
+        print(f"Link fallido: {url}")
+        raise
     return df_data 
 
 def getDataTMY(lat,lon):
     " Función que obtiene los datos de un único punto."
     
+    api_key          = API_KEY
     utc              = 'false'
+    email = EMAIL
     url = f'https://developer.nrel.gov/api/nsrdb/v2/solar/psm3-tmy-download.csv?wkt=POINT({lon}%20{lat})&names=tmy-2019&utc={utc}&email={email}&api_key={api_key}'
     return pd.read_csv(url,skiprows=2)
 

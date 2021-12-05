@@ -1,152 +1,65 @@
-# Herramientas y librerías para el desarrollo del proyecto de predicción de recurso solar.
+# Herramientas para el manejo de datos satelitales y de radiación solar :earth_americas:
 
 ![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/portada_GOES16.jpg?raw=true)
 
-<b> !!!Nota para Adrián : Revisar que el código no contenga API-keys privadas antes de actualizar!!!</b> <br> <br>
-Recopilación de las herramientas adquiridas y desarrolladas para el proyecto solar, así como guías para su funcionamiento y uso.
+<b> ! Nota para Adrián : Revisar que el código no contenga API-keys privadas antes de actualizar!</b> <br> <br>
 
-### Contenido
+## Contenido :writing_hand:
 
-<li type="circle"> <b> libGEOS </b> :earth_americas: :artificial_satellite: <br> 
-  &emsp;  Contiene las funciones desarrolladas para trabajar con las imágenes satélitales del NOAA GOES-16 </li>
+  - [Objetivos](#objetivos)
+  - [Instalación de dependencias](#instalación-de-dependencias)
+  - [Manual de generación de datasets](#manual-de-generación-de-datasets)
+
+## Objetivos
+En este repositorio están herramientas para la adquisición y manejo de datos satelitales provenientes del satélite GOES-16 y datos de radiación solar con el objetivo de la creación de datasets para el entrenamiento de modelos de inteligencia artificial para la predicción de la radiación solar. <br>
+
+## Instalación de dependencias
+**Se recomienda el uso de Anaconda (Python3)**<br>
+Una vez clonado (o descargado) el repositorio, entramos en él y ejecutamos el siguiente comando con pip para instalar todas las dependencias requeridas:
+
+Si se tiene anaconda
+``` 
+conda install requeriments.txt
+```
+Sin anaconda
+``` 
+pip3 install requeriments.txt
+```
+Después de instalar las dependencias es necesario conseguir una API-KEY del Nation Solar Radiation Database para la descarga de los datos de radiación solar en https://developer.nrel.gov/signup/
+
+Una vez se tenga la API-KEY se necesita editar un par de campos en el script ubicado en **lib/libNSRDB.py** de la siguiente forma:
+``` 
+API_KEY = "abcdef12345"
+EMAIL   = 'ejemplo@jemplo.com'
+```
+## Manual de generación de datasets
+Es posible generar datasets con información de múltiples bandas y de radiación solar, para conseguir una dataset en la carpeta **Datasets/** están los siguientes scripts que deben de ser ejecutados en el siguiente orden
+
+* **config.py**<br>
+  En este script se colocan las configuración principales para la descarga de los datos satelitales y de radiación solar así un primer pre-procesado de los datos satelitales.<br>
+
+  Tras su ejecución se creará un archivo **config.pickle** que contendrá  parte de las configuraciones realizadas.
+
+  **Antes de su ejecución es necesario modificar los ajustes que se deseen**
+
+* **descarga_GOES.py**<br>
+  Descarga los datos satelitales según las configuraciones establecidas en **config.py** los archivos descargados se encontrarán en la carpeta **Datasets/Descargas/GOES/**
+
+* **descarga_NSRDB.py**<br>
+Descarga de los datos de radiación solar del National Solar Radiation Database (NSRDB) según las configuraciones establecidas en **config.py**
+
+* **pre-procesado_GOES.py**<br>
+  Realiza un primer procesado de los datos satelitales para facilitar los siguientes pasos.
+
+* **separador_GOES.py**
+  Clasifica los datos según las localizaciones, este es el paso final previo a la generación de el dataset.
+
+* **gen_dataset.py**<br>
+Antes de ejecutar este script se necesitan colocar las configuraciones deseadas como
+  * Las bandas que se usarán en el dataset.
+  * Tamaño de las imágenes satelitales alrededor de cada punto.
+  * Si el dataset será de una serie de tiempo y de qué longitud será esta serie de tiempo.
   
-<li type="circle"> <b> libNSRDB </b> :sunny: <br> 
-  &emsp;  Contiene las funciones desarrolladas para descargar y trabajar con los datos del National Solar Radiation Database.</li>
- 
-<li type="circle"> <b> libGFS </b> 	:computer: :sun_behind_large_cloud: <br> 
-  &emsp;  Contiene las funciones desarrolladas para descargar y trabajar con los datos del modelo numérico Global Forecast System </li>
- 
-<li type="circle"> <b> Shapefiles </b> <br> 
-  &emsp;  Contiene archivos con información geométrica reelevante para la generación de mapas y visualizaciónes. 
-  
-### Registro para la descarga de datos del NSRDB
+  Una vez colocada estas configuraciones al principio del script se puede ejecutar el script.
 
-Para poder descargar los datos del NSRDB es necesario registrarse en https://developer.nrel.gov/signup/ <br>
-Una vez registrado hay que guardar la clave del API.
-  
-Esta clave del api la escribimos en <b>libNSRDB.py</b> al principio del archivo en la carpeta <b> lib </b> <br>
- Tambien es importante rellenar el campo de email.
-
- ```
-# -------------------------------------------------------------
-# Rellenar.
-api_key = ""   --> Aquí va su clave del API
-email   = ""
-# -------------------------------------------------------------
-```
-  
-
-### Instalación de las liberías de python requeridas
-  
-<li type="circle"> Nos aseguramos de tener instalado pip primero
- 
- ```
-sudo apt-get install python3-pip -y
-```
-  
-<li type="circle"> Instalamos las dependencias
- 
- ```
-pip3 install -r requeriments.txt
-```
-   
-### Guía rápida libNSRDB :sunny:
-
- <li type="circle"> <b>Descarga de datos del NSRDB </b> <br>
-   
- ```
-libNSRDB.getData(lat,lon,year,intervalo=60,UTC=False):
-    """ Función que obtiene los datos de un único punto.
-        Returna la información en un pandas.Dataframe
-        
-       ! Intervalos válidos : 5 , 10 , 15, 30, 60 (minutos)
-       ! Para los intervalos >=30 , solo los años 2018,2019,2020 son válidos.
-       ! UTC : True , si queremos que los datos los devuelva en hora UTC, False para devolver en hora local.
-    """
-   
-   return df
-```
-<br>
-  
-
-### Guía rápida libGOES :earth_americas: :artificial_satellite:
-
-<li type="circle"> <b> Obtener la fecha de un netCDF4 Dataset  </b> <br>
-
- ```
-libGOES.obtenerFecha_GOES(nc,return_datetime=False)
-   
-    """ Devuelve un string con la fecha de la imágen.
-        
-        return_datetime (bool): Si está en True, devuelve
-        .. la fecha como objeto datetime. De lo contrario
-        .. lo devuelve como string.
-   
-        !! Falta implementar que de la hora para otras zonas
-        horarias.
-    """
-   
-   return fecha
-```
-<br>
-
- <li type="circle"> <b>  Obtener a partir de la localización de coordenadas, la ubicación en pixeles en la imágen. </b> <br>
-
- ```
-libGOES.coordinates2px_GOES(nc,latitud,longitud)
-   
-       """Pasa de coordenadas a localización en px.
-          Returna una tupla con el índice que indica
-          en que pixel estan las coordenadas descritas.
-          
-          !Es necesario proporcionar el netCDF4 Dataset como
-          primera entrada
-          
-          ! La latitud y longitud deben de estar en número decimal.
-       """
-      
-      return px_x , px_y
-```
-<br>
-
-<li type="circle">  <b> Cortar y centrar una imágen del goes.  </b> <br>
-
- ```
-libGOES.cortarYcentrar_GOES(array,x,y ,ventana=200)
-    """
-    Dado un par de pixeles (px_x , px_y),
-    obtiene un subarray cuadrado, de radio (ventana),
-    a partir del array introducido (array)
-   
-   returna el array recortado.
-   
-   ! La función se encarga de las siatuciones cuando la 
-   ventana se sale de los límites del array original
-   recortando la imágen.
-    """
-   
-   return array
-```
-<br>
-   
-<li type="circle"> <b> Descarga del archivo más actual disponible para un producto. </b> <br>
-   Para una lista de productos disponibles ver : https://docs.opendata.aws/noaa-goes16/cics-readme.html <br>
-   Basado en la libería goes2go                : https://github.com/blaylockbk/goes2go/
-
- ```
-libGOES.datosActualesGOES16(producto,
-                        banda=None,
-                        output_name="GOES-descarga.nc")
-    """
-    
-    Descarga los datos más recientes de las categorias ingresadas, desde datos alojados en AWS.
-    Los guarda en formato netCDF con el nombre ingresado en (output_name)
-    
-    Cuando el producto es de clase ABI-L1b-RadC es necesario introducir la bada
-    que se desea descargar.
-    
-    LA FUNCIÓN SIGUE EN DESAROLLO, SOLO USAR CON PRODUCTOS EN EL DOMINIO DE CONUS.
-    """
-```
-<br>
-   
+  El dataset generado se encontrará en la carpeta **Datasets/Datasets/** 
