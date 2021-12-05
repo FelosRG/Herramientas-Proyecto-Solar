@@ -9,22 +9,25 @@ AÑO_DATOS = 2020
 #----------------------------------------------------
 
  # --> Días del año del que se descargarán los datos. (12 valor recomendado)
-DÍAS   = 2#8
-BANDAS = [4,6]#[4,6,7,8,9,10,11,12,13,14,15,16]
+DÍAS   = 2 #8
+BANDAS = [4,6]  #[4,6,7,8,9,10,11,12,13,14,15,16]
 
+# No meodificar estos
 PRODUCTO = "ABI-L1b-RadC"
 VARIABLE = "Rad"
 
-# Horas en las que se descargarán los datos. (12:00 UTC equivale a 7:00 am hora México.)
+# Horas  (e UTC) en las que se descargarán los datos. (12:00 UTC equivale a 7:00 am hora México.)
 HORA_INICIO_UTC , MIN_INICIO_UTC = 12 , 00
-HORA_FINAL_UTC  , MIN_FINAL_UTC  = 14,00#23 , 59
+HORA_FINAL_UTC  , MIN_FINAL_UTC  = 14 , 00 #23 , 59
 
 # CONFIGURACIÓN DE LA GENERACIÓN DE DATASETS
 #-------------------------------------------:
 RESOLUCIÓN      = 5#15   # --> Resolución del grid con el que se divirá méxico. (15 valor recomendado)
-VENTANA_RECORTE = 50   # --> Tamaño de la ventana de recoorte alrededor del punto en el pre-procesado.
+VENTANA_RECORTE = 50     # --> Tamaño de la ventana de recoorte alrededor del punto en el pre-procesado.
 
+# Si hay problemas con la memoria ram subir este numero por ejemplo a 10.
 NUM_LOCALIDADES_EN_CHUNK = 5
+
 # --> Límites geográficos para la generación del grid espacial.
 INF_LAT , SUP_LAT =   16.8 ,  24.3
 INF_LON , SUP_LON = -110.8 , -93.1

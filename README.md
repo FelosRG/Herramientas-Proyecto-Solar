@@ -62,4 +62,32 @@ Antes de ejecutar este script se necesitan colocar las configuraciones deseadas 
   
   Una vez colocada estas configuraciones al principio del script se puede ejecutar el script.
 
-  El dataset generado se encontrará en la carpeta **Datasets/Datasets/** 
+  El dataset generado se encontrará en la carpeta **Datasets/Datasets/**  y tendrá como nombre las principales configuraciones realizadas por ejemplo:<br>
+
+  **Ventana_5-Bandas_4_6_-Secuencia_1-Resolucion_5-NSRDB.h5**
+  
+  Que significa:
+  * [Ventana] Las imágenes del dataset estan compuestas por imágenes de 5px de ventana (10x10 px de tamaño)
+  * [Bandas] El datset contiene datos de la banda 4 y 6 del satélite GOES
+  * [Secuecia] El dataset está compuesto por series de tiempo de 1 de longitud.
+  * [Resolución] El grid con la que se dividió la región especificada fue de 5x5.
+  * [NSRDB] Significa que los datos solares provienen del National Solar Radiation Database. (Proximamente quiero implementar otras fuentes de datos de radiación solar)
+
+Notar que el dataset está en formato h5, que es posible abrir con la libería h5py, de la siguiente forma:
+
+```python 
+import h5py
+
+# nombre ejemplo
+nombre_dataset = Ventana_5-Bandas_4_6_-Secuencia_1-Resolucion_5-NSRDB.h5
+
+# Para ver los nombre de las variables disponibles dentro del dataset
+with h5py.File(nombre_dataset,"r") as dataset:
+  print(dataset.keys())
+
+# Para extaer los datos de una variable
+with h5py.File(nombre_dataset,"r") as dataset:
+  variable = dataset["nombre de la variable"][()]
+```
+
+Todas las variables son numpy arrays 
