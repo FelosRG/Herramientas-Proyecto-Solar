@@ -8,6 +8,7 @@
 
   - [Objetivos](#objetivos)
   - [Instalación de dependencias](#instalación-de-dependencias)
+  - [Descarga de datos satelitales]()
   - [Manual de generación de datasets](#manual-de-generación-de-datasets)
   - [Tutorial de generación de datasets](#tutorial-de-generación-de-dataset)
   - [Tutorial de visualización de datasets](#tutorial-de-visualización-del-dataset)
@@ -34,6 +35,24 @@ Una vez se tenga la API-KEY se necesita editar un par de campos en el script ubi
 API_KEY = "abcdef12345"
 EMAIL   = 'ejemplo@jemplo.com'
 ```
+
+## Guía de descarga de datos satelitales
+
+En el repositorio hay dos notebooks que sirven como guía para la descaga de imágenes en el archivo histórico de una fecha o momento en el pasado, y otra para la descarga de la imágen más reciente.
+
+Ambos notebooks tambien son una pequeña guía para el uso de las herramientas de manipulación de imágenes satélitales desarolladas en la liberia libGOES.py
+
+Por ejemplo:
+Con las herramientas de descarga y manipulación es posible enocntrar la posición en la imágen de una coordenadas geográficas así como hacer "zoom" alrededor de ese punto.
+
+En la siguiente imágen descargada fue ubicada el lago de chapala a travez d las coordenadas
+
+![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/imagen_satelital.png?raw=true)
+
+para luego hacer "zoom"
+
+![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/lago_de_chapala.png?raw=true)
+
 ## Manual de generación de datasets
 Es posible generar datasets con información de múltiples bandas y de radiación solar, para conseguir una dataset en la carpeta **Datasets/** están los siguientes scripts que deben de ser ejecutados en el siguiente orden
 
