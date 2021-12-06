@@ -70,7 +70,6 @@ class Sincronizador:
             except IndexError:
                 break
         if longitud == 1:
-            print(f"Iteraciones realizadas {self.iteraciones}")
             return lista_momentos
         else:
             raise NotImplementedError("Aun no creo el código para series de tiemmpo mayores a 1.")

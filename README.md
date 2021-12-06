@@ -111,7 +111,7 @@ HORA_FINAL_UTC  , MIN_FINAL_UTC  = 23 , 59
 # Dividimos a la región especificada en un grid 5x5, cada intersección del grid es un lugar de donde se generarán los datos del dataset.
 RESOLUCIÓN = 5
 
-VENTANA_RECORTE = 200
+VENTANA_RECORTE = 100
 
 # Las otras configuraciones las dejamos como estan.
 ```
@@ -131,7 +131,7 @@ Despues modificamos las configuraciones en **gen_dataset.py**
 BANDAS  = [4,13]
 
 # Utilizaremos los 200 pixeles de ventana de la ventana de recorte puesta en config.py
-VENTANA = 200 
+VENTANA = 100
 
 # Información de los datos del NSRDB que ocuparemos en la generación de nuestro dataset
 DATOS_NSRDB = ["GHI","Solar Zenith Angle","Clearsky GHI"]
