@@ -38,20 +38,24 @@ EMAIL   = 'ejemplo@jemplo.com'
 
 ## Guía de descarga de datos satelitales
 
-En el repositorio hay dos notebooks que sirven como guía para la descaga de imágenes en el archivo histórico de una fecha o momento en el pasado, y otra para la descarga de la imágen más reciente.
+En el repositorio hay dos notebooks que sirven como guía para la descarga de imágenes en el archivo histórico de una fecha o momento en el pasado, y otra para la descarga de la imágen más reciente.
 
-Ambos notebooks tambien son una pequeña guía para el uso de las herramientas de manipulación de imágenes satélitales desarolladas en la liberia libGOES.py
+Ambos notebooks también son una pequeña guía para el uso de las herramientas de manipulación de imágenes satélitales desarrolladas en la liberia libGOES.py
 
 Por ejemplo:
-Con las herramientas de descarga y manipulación es posible enocntrar la posición en la imágen de una coordenadas geográficas así como hacer "zoom" alrededor de ese punto.
+Con las herramientas de descarga y manipulación es posible encontrar la posición en la imágen de una coordenadas geográficas así como hacer "zoom" alrededor de ese punto.
 
-En la siguiente imágen descargada fue ubicada el lago de chapala a travez d las coordenadas
+En la siguiente imágen descargada fue ubicada el lago de chapala a travéz de las coordenadas con la función **lib.libGOES.coordinates2px**
 
-![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/imagen_satelital.png?raw=true)
+<p align="center">
+ <img src="https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/imagen_satelital.png?raw=true" />
+</p>
 
-para luego hacer "zoom"
+para luego hacer "zoom" con **lib.GOES.cortarYcentrar**
 
-![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/lago_de_chapala.png?raw=true)
+<p align="center">
+ <img src="https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/lago_de_chapala.png?raw=true" />
+</p>
 
 ## Manual de generación de datasets
 Es posible generar datasets con información de múltiples bandas y de radiación solar, para conseguir una dataset en la carpeta **Datasets/** están los siguientes scripts que deben de ser ejecutados en el siguiente orden
@@ -88,13 +92,13 @@ Antes de ejecutar este script se necesitan colocar las configuraciones deseadas 
   **Ventana_5-Bandas_4_6_-Secuencia_1-Resolucion_5-NSRDB.h5**
   
   Que significa:
-  * [Ventana] Las imágenes del dataset estan compuestas por imágenes de 5px de ventana (10x10 px de tamaño)
-  * [Bandas] El datset contiene datos de la banda 4 y 6 del satélite GOES
-  * [Secuecia] El dataset está compuesto por series de tiempo de 1 de longitud.
+  * [Ventana] Las imágenes del dataset están compuestas por imágenes de 5px de ventana (10x10 px de tamaño)
+  * [Bandas] El dataset contiene datos de la banda 4 y 6 del satélite GOES
+  * [Secuencia] El dataset está compuesto por series de tiempo de 1 de longitud.
   * [Resolución] El grid con la que se dividió la región especificada fue de 5x5.
-  * [NSRDB] Significa que los datos solares provienen del National Solar Radiation Database. (Proximamente quiero implementar otras fuentes de datos de radiación solar)
+  * [NSRDB] Significa que los datos solares provienen del National Solar Radiation Database. (Próximamente quiero implementar otras fuentes de datos de radiación solar)
 
-Notar que el dataset está en formato h5, que es posible abrir con la libería h5py, de la siguiente forma:
+Notar que el dataset está en formato h5, que es posible abrir con la librería h5py, de la siguiente forma:
 
 ```python 
 import h5py
@@ -106,7 +110,7 @@ nombre_dataset = Ventana_5-Bandas_4_6_-Secuencia_1-Resolucion_5-NSRDB.h5
 with h5py.File(nombre_dataset,"r") as dataset:
   print(dataset.keys())
 
-# Para extaer los datos de una variable
+# Para extraer los datos de una variable
 with h5py.File(nombre_dataset,"r") as dataset:
   variable = dataset["nombre de la variable"][()]
 ```
@@ -116,16 +120,13 @@ Todas las variables se devuelven en numpy arrays <br><br>
 
 ## Tutorial de generación de dataset
 
-En esta sección está que esperar del dataset generado y como  se puede usar.<br> Para ello vamos a correr el dataset en las siguientes configuraciones
-
-**En config.py** <br>
-Modificamos las siguintes configuraciones como:
+Para generar un dataset vamos a primero cambiar las siguientes configuraciónes  en **config.py** <br>
 
 ```python
-DÍAS = 1        # Para descargar solo un día del año de datos satélitales.
+DÍAS = 1        # Para descargar solo un día del año de datos satelitales.
 BANDAS = [4,13] # Pero puede ser cualquier otro par de bandas
 
-# Descargaremos datos entre las horas de la 1pm y 2pm hora de México.
+# Descargamos los datos entre las horas de la 1pm y 2pm hora de México. (El intervalo es arbitrario)
 HORA_INICIO_UTC , MIN_INICIO_UTC = 18 , 00
 HORA_FINAL_UTC  , MIN_FINAL_UTC  = 19 , 00
 
@@ -134,7 +135,7 @@ RESOLUCIÓN = 5
 
 VENTANA_RECORTE = 100
 
-# Las otras configuraciones las dejamos como estan.
+# Las otras configuraciones las dejamos como están.
 ```
 
 Guardamos config.py y ejecutamos los siguientes scripts en el siguiente orden:
@@ -145,7 +146,7 @@ Guardamos config.py y ejecutamos los siguientes scripts en el siguiente orden:
 * pre-procesado.py
 * separador.py
 
-Despues modificamos las configuraciones en **gen_dataset.py**
+Después modificamos las configuraciones en **gen_dataset.py**
 
 ```python
 # El dataset estará conformado por información de las bandas 4 y 13
@@ -157,10 +158,10 @@ VENTANA = 60
 # Información de los datos del NSRDB que ocuparemos en la generación de nuestro dataset
 DATOS_NSRDB = ["GHI","Solar Zenith Angle","Clearsky GHI"]
 
-# Las otras configuraciones las dejamos como estan.
+# Las otras configuraciones las dejamos como están.
 ```
 
-Guardamos y ejecutamos **gen_dataset.py**, una vez finalizado el procesado tendremos nuestro dataset en **Dasets/Datasets/** llamado<br>
+Guardamos y ejecutamos **gen_dataset.py**, una vez finalizado el procesado tendremos nuestro dataset en **Datasets/Datasets/** llamado<br>
 
 **Ventana_200-Bandas_4_13-Secuencia_1-Resolucion_5-NSRDB.h5**
 
