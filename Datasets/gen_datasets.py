@@ -20,8 +20,8 @@ IMPORTANTE!
 # ---------------
 
 # Datos satélitales que conformarán el dataset final.
-VENTANA = 5     # --> Ventana de recorte.
-BANDAS  = [4,6]   # --> Bandas que conformarán el dataset.
+VENTANA = 60       # --> Ventana de recorte.
+BANDAS  = [4,13]   # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  
@@ -62,8 +62,7 @@ Path(config.PATH_DATASET_FINAL).mkdir(parents=True,exist_ok=True)
 # Revisamos que las bandas puestas estén descargada.
 print("Revisando la existencia de todos los archivos a usar...")
 for num_banda in BANDAS:
-    if os.path.exists(config.PATH_DATASET_GOES + "4/") == False: raise FileNotFoundError(f"No se encontro el dataset de la banda {num_banda}")
-
+    if os.path.exists(config.PATH_DATASET_GOES + f"{num_banda}/") == False: raise FileNotFoundError(f"No se encontro el dataset de la banda {num_banda}")
 
 def nombre_dataset():
     nombre = ""
@@ -80,6 +79,7 @@ def datetime_bandas(T):
     "Obtenemos lista de objetos datetime de las bandas."
     lista_datetime = [goes.obtenerFecha_GOES(int(t),return_datetime=True) for t in T]
     return lista_datetime
+
 def datetime_NSRDB(df):
     "Obtenemos lista de objetos datetime del NSRDB"
     año = df["Year"].values
@@ -103,24 +103,21 @@ def procesar_batch(nombre_batch):
             T      = batch["T"][()]
         lista_datetime = datetime_bandas(T)
 
-        Datos = np.stack([Arrays,DQF]).reshape(-1,2,config.VENTANA_RECORTE*2,config.VENTANA_RECORTE*2)
+        Datos = np.stack([Arrays,DQF],axis=1)#.reshape(-1,2,config.VENTANA_RECORTE*2,config.VENTANA_RECORTE*2)
         Datos = list(Datos)
         datos_temporales.append(Sinc.DatosTemporales(lista_datos=Datos,lista_datetime=lista_datetime))
 
-    print("\nGenerando objeto temporal de archivo csv del NSRDB...")
     # Le añadimos el dato temporal de los datos de NSRDB.
     df = pd.read_csv(config.PATH_DESCARGA_NSRDB + nombre_batch + "csv")
     lista_datetime = datetime_NSRDB(df)
     datos_temporales.append(Sinc.DatosTemporales(lista_datos=df,lista_datetime=lista_datetime))
 
     # Iniciamos sincronización
-    print("Sincronizando datos...")
     sincronizador = Sinc.Sincronizador(datos_temporales,verbose=True)
     serie_tiempo  = sincronizador.generarSerieTiempo(UMBRAL_SINCRONIZACIÓN*60,UMBRAL_SERIE*60,longitud=LONGITUD_SECUENCIA)
     serie_tiempo  = np.array(serie_tiempo)
     num_series    = serie_tiempo.shape[0]
 
-    print("Extrayendo los datos de la sincronización.")
     # Obtenemos los datos asociados a las bandas.
     datos_GOES = {}
     for i,banda in zip(range(len(BANDAS)),BANDAS):
@@ -130,15 +127,11 @@ def procesar_batch(nombre_batch):
     for columna in DATOS_NSRDB:
         datos_NSRDB[columna] = df[columna].iloc[serie_tiempo[:,-1]].values
 
-    print("Iniciando procesamiento final...")
-    print("Recortando los arrays a la ventana especificada...")
     for banda in BANDAS:
         array = datos_GOES[str(banda)]
-        array = array[:,:,config.VENTANA_RECORTE - VENTANA:config.VENTANA_RECORTE + VENTANA,config.VENTANA_RECORTE - VENTANA:config.VENTANA_RECORTE + VENTANA]
+        array = array[:,:,config.VENTANA_RECORTE - VENTANA : config.VENTANA_RECORTE + VENTANA , config.VENTANA_RECORTE - VENTANA : config.VENTANA_RECORTE + VENTANA]
         datos_GOES[str(banda)] = array
     
-    print("Realizando los checks con los flags de los datos satelitales...")
-
     # Revisamos datos inválidos.
     indices_validos  = []
     for i in range(datos_GOES[str(BANDAS[0])].shape[0]):
@@ -187,7 +180,7 @@ if __name__ == "__main__":
                     raise NotImplementedError("Aun no implemento el caso de no unir batches.")
 
                 num_batch_procesados += 1
-                print(f"Batch procesados {num_batch_procesados} de {num_batch_totales}")
+                print(f"Batch procesados {num_batch_procesados} de {int(num_batch_totales)}, progreso {round(100*num_batch_procesados/num_batch_totales,1)}%")
     
     # Concatenamos y guardamos.
     print("\nGuardando datos...")
@@ -195,12 +188,13 @@ if __name__ == "__main__":
     with h5py.File(nombre_dataset_final,"w") as dataset:
         for banda in BANDAS:
             datos_GOES[str(banda)] = np.concatenate(datos_GOES[str(banda)],axis=0)
-            print(f"shape  datos banda {banda}: {datos_GOES[str(banda)].shape}")
-            dataset.create_dataset(name=str(banda),data=datos_GOES[str(banda)])
+            dataset.create_dataset(name=str(banda),data=datos_GOES[str(banda)],dtype=np.float32)
         for columna in DATOS_NSRDB:
             datos_NSRDB[columna] = np.concatenate(datos_NSRDB[columna],axis=0)
-            print(f"shape columna {columna}: {datos_NSRDB[columna].shape}")
             dataset.create_dataset(name=columna,data=datos_NSRDB[columna])
+    
+    print(f"Se ha creado el dataset {nombre_dataset()} con {len(datos_NSRDB[columna])} datos" )
+    print("Script de generación de dataset terminado!")
 
 
 
