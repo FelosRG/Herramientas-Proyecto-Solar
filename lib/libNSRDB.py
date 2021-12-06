@@ -1,6 +1,6 @@
 # Configuración de usuario.
-API_KEY = "gfYiPMGMLLOMK6h8PcSp2102kPZrFFwFIqp5vSM9"
-EMAIL   = "felos@ciencias.unam.mx"
+API_KEY = None
+EMAIL   = None
 # -------------------------------------------
 
 
