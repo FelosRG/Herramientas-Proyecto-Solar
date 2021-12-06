@@ -9,6 +9,8 @@
   - [Objetivos](#objetivos)
   - [Instalación de dependencias](#instalación-de-dependencias)
   - [Manual de generación de datasets](#manual-de-generación-de-datasets)
+  - [Tutorial de generación de datasets](#tutorial-de-generación-de-dataset)
+  - [Tutorial de visualización de datasets](#tutorial-de-visualización-del-dataset)
 
 ## Objetivos
 En este repositorio están herramientas para la adquisición y manejo de datos satelitales provenientes del satélite GOES-16 y datos de radiación solar con el objetivo de la creación de datasets para el entrenamiento de modelos de inteligencia artificial para la predicción de la radiación solar. <br>
@@ -104,9 +106,9 @@ Modificamos las siguintes configuraciones como:
 DÍAS = 1        # Para descargar solo un día del año de datos satélitales.
 BANDAS = [4,13] # Pero puede ser cualquier otro par de bandas
 
-# Descargaremos entre las horas de 7am a 7pm hora de méxico
-HORA_INICIO_UTC , MIN_INICIO_UTC = 12 , 00
-HORA_FINAL_UTC  , MIN_FINAL_UTC  = 23 , 59
+# Descargaremos datos entre las horas de la 1pm y 2pm hora de México.
+HORA_INICIO_UTC , MIN_INICIO_UTC = 18 , 00
+HORA_FINAL_UTC  , MIN_FINAL_UTC  = 19 , 00
 
 # Dividimos a la región especificada en un grid 5x5, cada intersección del grid es un lugar de donde se generarán los datos del dataset.
 RESOLUCIÓN = 5
@@ -130,8 +132,8 @@ Despues modificamos las configuraciones en **gen_dataset.py**
 # El dataset estará conformado por información de las bandas 4 y 13
 BANDAS  = [4,13]
 
-# Utilizaremos los 200 pixeles de ventana de la ventana de recorte puesta en config.py
-VENTANA = 100
+# Utilizaremos los 60 pixeles de ventana de la ventana de recorte puesta en config.py
+VENTANA = 60
 
 # Información de los datos del NSRDB que ocuparemos en la generación de nuestro dataset
 DATOS_NSRDB = ["GHI","Solar Zenith Angle","Clearsky GHI"]
@@ -152,19 +154,40 @@ Ya con el dataset generado movemos el dataset (o lo descargamos a nuestra comput
 Con los siguiente:
 
 ```python
-
 import h5py
 import matplotlib.pyplot as plt
 
-nombre_dataset = "Ventana_200-Bandas_4_13-Secuencia_1-Resolucion_5-NSRDB.h5"
+# Extraemos los datos del dataset
+nombre_dataset = "Ventana_60-Bandas_4_13_-Secuencia_1-Resolucion_5-NSRDB.h5"
 with h5py.File(nombre_dataset,"r") as dataset:
-  GHI = dataset["GHI"][()]
-  Banda_4 = dataset["4"][()]
-  Banda_13 = dataset["13"][()]
- 
+    banda_4  = dataset["4"][()]
+    banda_13 = dataset["13"][()]
+    GHI   = dataset["GHI"][()]
+
+# Extraemos los datos de un mismo momento y lugar usando el mismo index
+
+# Por ejemplo banda_4[i] y banda_13[i] y GHI[i] corresponden a las imágenes de la banda 4 y banda 13  y la readición solar del mismo momento en el mismo lugar.
+
+fig, ax = plt.subplots(2,3,figsize=(14,8))
+for i in range(3):
+    ax[0,i].imshow(banda_4[i])
+    ax[0,i].set_title("Banda 4",loc="left",weight="bold")
+    ax[0,i].set_title(f"t={i}",loc="center")
+    ax[0,i].set_title(f"GHI={GHI[i]}",loc="right")
+    ax[0,i].axis("off")
+    
+    ax[1,i].imshow(banda_13[i])
+    ax[1,i].set_title("Banda 13",loc="left",weight="bold")
+    ax[1,i].set_title(f"t={i}",loc="center")
+    ax[1,i].set_title(f"GHI={GHI[i]}",loc="right")
+    ax[1,i].axis("off")
 ```
 
+Y como se pude ver en el resultado, le hemos asociado el dato de radiación solar a cada una de las imágenes.
 
+**Nota: La información de la radiación solar es del centro de la imágen.**
+
+![alt text](https://github.com/FelosRG/Herramientas-Proyecto-Solar/blob/main/Figuras/dataset.png?raw=true)
 
 
 
