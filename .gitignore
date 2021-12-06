@@ -3,4 +3,4 @@ Datasets/Preprocesado_GOES
 Datasets/config.pickle
 Datasets/Datasets/
 Datasets/__pycache__/
-
+lib/__pycache__/
