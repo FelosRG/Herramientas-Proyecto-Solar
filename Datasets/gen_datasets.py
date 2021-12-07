@@ -117,7 +117,7 @@ def procesar_batch(nombre_batch):
     serie_tiempo  = sincronizador.generarSerieTiempo(UMBRAL_SINCRONIZACIÓN*60,UMBRAL_SERIE*60,longitud=LONGITUD_SECUENCIA)
     serie_tiempo  = np.array(serie_tiempo)
     num_series    = serie_tiempo.shape[0]
-
+    print(f"serie tiempo shape: {serie_tiempo.shape} , {serie_tiempo[:,0].shape}" )
     # Obtenemos los datos asociados a las bandas.
     datos_GOES = {}
     for i,banda in zip(range(len(BANDAS)),BANDAS):
