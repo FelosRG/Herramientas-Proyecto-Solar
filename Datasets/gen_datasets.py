@@ -21,7 +21,7 @@ IMPORTANTE!
 
 # Datos satélitales que conformarán el dataset final.
 VENTANA = 5    # --> Ventana de recorte.
-BANDAS  = [4]   # --> Bandas que conformarán el dataset.
+BANDAS  = [4,13]   # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  
@@ -117,11 +117,14 @@ def procesar_batch(nombre_batch):
     serie_tiempo  = sincronizador.generarSerieTiempo(UMBRAL_SINCRONIZACIÓN*60,UMBRAL_SERIE*60,longitud=LONGITUD_SECUENCIA)
     serie_tiempo  = np.array(serie_tiempo)
     num_series    = serie_tiempo.shape[0]
-    print(f"serie tiempo shape: {serie_tiempo.shape} , {serie_tiempo[:,0].shape}" )
+
+    print(serie_tiempo.shape)
+
     # Obtenemos los datos asociados a las bandas.
     datos_GOES = {}
     for i,banda in zip(range(len(BANDAS)),BANDAS):
         datos_GOES[str(banda)] = np.take(np.array(datos_temporales[i].lista_datos),serie_tiempo[:,i],axis=0)
+
     # Obtenemos los datos asociados a NSRDB
     datos_NSRDB = {} 
     for columna in DATOS_NSRDB:
