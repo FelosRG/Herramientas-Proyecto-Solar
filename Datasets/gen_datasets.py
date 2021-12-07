@@ -20,8 +20,8 @@ IMPORTANTE!
 # ---------------
 
 # Datos satélitales que conformarán el dataset final.
-VENTANA = 60       # --> Ventana de recorte.
-BANDAS  = [4,13]   # --> Bandas que conformarán el dataset.
+VENTANA = 5    # --> Ventana de recorte.
+BANDAS  = [4]   # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  
@@ -103,7 +103,7 @@ def procesar_batch(nombre_batch):
             T      = batch["T"][()]
         lista_datetime = datetime_bandas(T)
 
-        Datos = np.stack([Arrays,DQF],axis=1)#.reshape(-1,2,config.VENTANA_RECORTE*2,config.VENTANA_RECORTE*2)
+        Datos = np.stack([Arrays,DQF],axis=1)
         Datos = list(Datos)
         datos_temporales.append(Sinc.DatosTemporales(lista_datos=Datos,lista_datetime=lista_datetime))
 
