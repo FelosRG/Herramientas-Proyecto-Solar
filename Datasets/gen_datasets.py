@@ -20,8 +20,8 @@ IMPORTANTE!
 # ---------------
 
 # Datos satélitales que conformarán el dataset final.
-VENTANA = 5    # --> Ventana de recorte.
-BANDAS  = [4,6,7,13,16]   # --> Bandas que conformarán el dataset.
+VENTANA = 40    # --> Ventana de recorte.
+BANDAS  = [4,13]   # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  

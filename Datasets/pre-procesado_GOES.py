@@ -63,7 +63,7 @@ def pre_procesado_GOES(banda):
                     lat , lon = Lat[i,j] , Lon[i,j]
                     if mask[i,j]:
                         # Recortamos.
-                        px_y , px_x   = GOES.coordinates2px_GOES(nc , latitud=lat , longitud=lon)
+                        px_x , px_y   = GOES.coordinates2px_GOES(nc , latitud=lat , longitud=lon)
                         array_datos_V = GOES.cortarYcentrar_GOES(array_datos,px_x,px_y,ventana=config.VENTANA_RECORTE)
                         array_DQF_V   = GOES.cortarYcentrar_GOES(array_DQF  ,px_x,px_y,ventana=config.VENTANA_RECORTE)
                         # Agregamos a la lista de guardado.
