@@ -142,6 +142,8 @@ def procesar_batch(nombre_batch):
         for banda in BANDAS:
             for flag in config.FLAGS_GOES:
                 puntos_invalidos += np.sum(datos_GOES[str(banda)][i,1,:,:] == flag)
+            # Sumamos los que tengan fill values.
+            puntos_invalidos += np.sum(datos_GOES[str(banda)][i,0,:,:] == config.fill_value[str(banda)])
         if puntos_invalidos == 0:
             indices_validos.append(i)
     
