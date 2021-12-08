@@ -21,7 +21,7 @@ IMPORTANTE!
 
 # Datos satélitales que conformarán el dataset final.
 VENTANA = 5    # --> Ventana de recorte.
-BANDAS  = [4,13]   # --> Bandas que conformarán el dataset.
+BANDAS  = [4,6,7,13,16]   # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  
@@ -143,7 +143,7 @@ def procesar_batch(nombre_batch):
             for flag in config.FLAGS_GOES:
                 puntos_invalidos += np.sum(datos_GOES[str(banda)][i,1,:,:] == flag)
             # Sumamos los que tengan fill values.
-            puntos_invalidos += np.sum(datos_GOES[str(banda)][i,0,:,:] == config.fill_value[str(banda)])
+            puntos_invalidos += np.sum(datos_GOES[str(banda)][i,0,:,:] == config.fill_value[banda])
         if puntos_invalidos == 0:
             indices_validos.append(i)
     
