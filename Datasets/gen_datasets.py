@@ -120,8 +120,14 @@ def procesar_batch(nombre_batch):
 
     # Obtenemos los datos asociados a las bandas.
     datos_GOES = {}
-    for i,banda in zip(range(len(BANDAS)),BANDAS):
-        datos_GOES[str(banda)] = np.take(np.array(datos_temporales[i].lista_datos),serie_tiempo[:,i],axis=0)
+    try:
+        for i,banda in zip(range(len(BANDAS)),BANDAS):
+            datos_GOES[str(banda)] = np.take(np.array(datos_temporales[i].lista_datos),serie_tiempo[:,i],axis=0)
+    except IndexError:
+        print("Sucedio un error en la extración de los datos de las bandas desde la serie de tiempo.")
+        print("Shape serie _tiempo  : ",np.array(serie_tiempo).shape)
+        print("Shape lista de datos :" ,np.array(datos_temporales[i].lista_datos))
+        raise IndexError("Error en la extración de datos de la serie de tiempo. Una causa puede ser el haber cambiado la configuración. Probar en borrar la carpeta de archivos descargados y pre-procesados.")
 
     # Obtenemos los datos asociados a NSRDB
     datos_NSRDB = {} 
