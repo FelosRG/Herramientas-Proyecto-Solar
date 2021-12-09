@@ -45,6 +45,7 @@ def pre_procesado_GOES(banda):
         datos_array = []
         datos_DQF   = []
         datos_t     = []
+        datos_coordenadas = [[],[]]
         # Iteramos sobre los archivos de ese batch.
         for archivo in lista_netCDF:
             # Abrimos netCDF y extraemos datos.
@@ -70,13 +71,15 @@ def pre_procesado_GOES(banda):
                         datos_array.append(np.array(array_datos_V).astype(np.int16))
                         datos_DQF.append(np.array(array_DQF_V).astype(np.int8))
                         datos_t.append(t)
+                        datos_coordenadas[0].append(lat) , datos_coordenadas[1].append(lon)
                         # Métricas.
                         num_datos += 1
+                        
             # Cerramos netCDF
             nc.close()
         # Guardamos batch.
         nombre_batch = "Batch_" + str(num_batch).zfill(2) + ".h5"
-        config.guardar_batch(datos_array,datos_DQF,datos_t,banda,nombre_batch,path=config.PATH_PREPROCESADO_GOES)
+        config.guardar_batch(datos_array,datos_DQF,datos_t,datos_coordenadas,banda,nombre_batch,path=config.PATH_PREPROCESADO_GOES)
         num_batch += 1
         porcentaje = round((num_batch / batch_totales)*100,1)
         print(f"Num batch procesados: {num_batch} de {batch_totales} ({porcentaje}%)")

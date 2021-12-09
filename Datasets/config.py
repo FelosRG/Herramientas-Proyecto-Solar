@@ -35,6 +35,8 @@ INF_LON , SUP_LON = -110.8 , -93.1
 
 import os
 import sys
+
+from h5py._hl.dataset import Dataset
 _path_script    = os.path.realpath(__file__) 
 _path_script    = "/".join(_path_script.split("/")[:-1])
 sys.path.append(_path_script + "/../")
@@ -118,7 +120,7 @@ def cargar_mask_temporal(retornar_datetime:bool=False):
     else:
         return días_descarga
 
-def guardar_batch(datos_array,datos_DQF,datos_t,banda,nombre_batch,path):
+def guardar_batch(datos_array,datos_DQF,datos_t,datos_coordenadas,banda,nombre_batch,path):
     "Guarda un batch de datos al disco."
     path_output_dataset = f"{path}{banda}/"
     Path(path_output_dataset).mkdir(parents=True,exist_ok=True)
@@ -129,9 +131,14 @@ def guardar_batch(datos_array,datos_DQF,datos_t,banda,nombre_batch,path):
         datos_array = np.array(datos_array) #.reshape(-1,res,res).astype(np.uint16)
         datos_DQF   = np.array(datos_DQF  ) #.reshape(-1,res,res).astype(np.uint16)
         datos_t     = np.array(datos_t) #.astype(np.uint32)
+        datos_coordenadas = np.array(datos_coordenadas)
         file.create_dataset("T"    ,data=datos_t    )
         file.create_dataset("Datos",data=datos_array)
         file.create_dataset("DQF"  ,data=datos_DQF  )
+        Lat = datos_coordenadas[0]
+        Lon = datos_coordenadas[1]
+        datos_coordenadas = np.stack([Lat,Lon],axis=1)
+        file.create_dataset("Coordenadas",data=datos_coordenadas)
 
 
 

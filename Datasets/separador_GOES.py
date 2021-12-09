@@ -19,9 +19,10 @@ import config
 # Cargando configuraciones.
 Lat,Lon,mask  = config.cargar_mask_espacial()
 días_descarga = config.cargar_mask_temporal()
-batch_totales = len(días_descarga)
+batch_totales   = len(días_descarga)
+num_comunidades = int(np.sum(mask))
 
-# Separamos las comunidades en chunks
+# Obtenemos las latitudes y Longitudes
 lista_lat , lista_lon = [] , []
 for i in range(config.RESOLUCIÓN):
     for j in range(config.RESOLUCIÓN):
@@ -30,58 +31,110 @@ for i in range(config.RESOLUCIÓN):
             lon = Lon[i,j]
             lista_lat.append(lat)
             lista_lon.append(lon)
-            
-Lat , Lon       = np.array(lista_lat) , np.array(lista_lon)
-coordenadas     = np.stack([Lat,Lon],axis=1)
-num_comunidades = int(np.sum(mask))
 
-def separador_GOES(banda):
-    chunks_id          = np.array_split(np.arange(num_comunidades),config.NUM_LOCALIDADES_EN_CHUNK)
-    chunks_comunidades = np.array_split(coordenadas,config.NUM_LOCALIDADES_EN_CHUNK)
-    chunks_procesados  = 0
-    tiempo_o = time.time()
-    for chunk,chunk_ids in zip(chunks_comunidades,chunks_id):
-        # Creamos lista con la estructura de datos.
-        Lista_comunidades = [ [0,0,[],[],[]] for _ in range(len(chunk))]
+Lat , Lon         = np.array(lista_lat) , np.array(lista_lon)
+coordenadas_mask  = np.stack([Lat,Lon],axis=1)
+
+class Chunk:
+    def __init__(self,lista_index,lista_lat,lista_lon,banda):
+        self.banda = banda
+        self.lista_lat = lista_lat
+        self.lista_lon = lista_lon
+        self.lista_index = lista_index
+        self.num_localidades   = len(self.lista_lat)
+        self.datos_localidades = [{} for _ in range(self.num_localidades)]
+
+        # Checks
+        if len(self.lista_lon) != self.num_localidades:
+            raise IndexError("Listas de entrada no son del mismo tamaño.")
+        if len(self.lista_index) != self.num_localidades:
+            raise IndexError("Listas de entrada no son del mismo tamaño.")
+        
+    def recopilar_datos(self):
+        # Encontramos cuantos batches hay de la banda
+        batch_totales = len(días_descarga)
+        # Escaneamos batch
+        lista_array = []
+        lista_dqf   = []
+        lista_t     = []
+        lista_coordenadas = []
         for num_batch in range(batch_totales):
-            # Abrimos batch
-            path_batch = f"{config.PATH_PREPROCESADO_GOES}{banda}/" + "Batch_" + str(num_batch).zfill(2) + ".h5"
+            path_batch = f"{config.PATH_PREPROCESADO_GOES}{self.banda}/" + "Batch_" + str(num_batch).zfill(2) + ".h5"
             with h5py.File(path_batch,"r") as batch:
                 Arrays = batch["Datos"][()]
                 DQF    = batch["DQF"][()]
                 T      = batch["T"][()]
-            for i,id_comunidad,comunidad in zip(range(len(chunk)),chunk_ids , chunk):
-                # Encontramos coordenadas de cada comunidad.
-                lat , lon = comunidad[0],comunidad[1]
-                Lista_comunidades[i][0] = lat
-                Lista_comunidades[i][1] = lon
-                # Separemos datos de esa comunidad y añadimos al chunk.
-                Lista_comunidades[i][2] += list(Arrays[id_comunidad::num_comunidades])
-                Lista_comunidades[i][3] += list(DQF[id_comunidad::num_comunidades])
-                Lista_comunidades[i][4] += list(T[id_comunidad::num_comunidades])
+                Coordenadas = batch["Coordenadas"][()]
+            # Iteramos sobre cada comunidad
+            for i in range(self.num_localidades):
+                lat = self.lista_lat[i]
+                lon = self.lista_lon[i]
+                indice_localidad = self.lista_index[i]
 
-        # FALTA IMPLEMENTAR EL GUARDADO DE CHUNKS!
-        for comunidad in Lista_comunidades:
-            lat , lon = comunidad[0] , comunidad[1]
+                # valores de cada localidad.
+                array = Arrays[indice_localidad::num_comunidades]
+                dqf   = DQF[indice_localidad::num_comunidades]
+                t     = T[indice_localidad::num_comunidades]
+                coordenadas = Coordenadas[indice_localidad::num_comunidades]
+
+                # Revisamos que todo coincida.
+                if np.sum(coordenadas[:,0] != lat) > 0:
+                    raise ValueError(f"coordenada de latitud no coincide {lat}: \n{coordenadas[:,0]}")
+                if np.sum(coordenadas[:,1] != lon) > 0:
+                    raise ValueError(f"coordenada de longitud no coincide {lon}: \n{coordenadas[:,1]}")
+
+                # Juntamos todo.    
+                try:
+                    self.datos_localidades[i]["Coordenadas"] += list(coordenadas)
+                    self.datos_localidades[i]["Datos"] += list(array)
+                    self.datos_localidades[i]["DQF"]   += list(dqf)
+                    self.datos_localidades[i]["t"]     += list(t)
+                except KeyError:
+                    self.datos_localidades[i]["Coordenadas"] = list(coordenadas)
+                    self.datos_localidades[i]["Datos"] = list(array)
+                    self.datos_localidades[i]["DQF"]   = list(dqf)
+                    self.datos_localidades[i]["t"]     = list(t)
+        
+        # Guardamos localidad.
+        for i in range(self.num_localidades):
+            lat, lon = self.datos_localidades[i]["Coordenadas"][0]
             nombre_archivo = general.asignarNombreArchivo(lat=lat,lon=lon,extensión="h5")
             config.guardar_batch(
-                comunidad[2]      ,
-                comunidad[3]      ,
-                comunidad[4]      ,
-                banda             ,
-                nombre_archivo                ,
-                path=config.PATH_DATASET_GOES )
+                datos_array = self.datos_localidades[i]["Datos"],
+                datos_DQF   = self.datos_localidades[i]["DQF"]  ,
+                datos_t     =  self.datos_localidades[i]["t"]   ,
+                datos_coordenadas = self.datos_localidades[i]["Coordenadas"] ,
+                banda = self.banda              ,
+                nombre_batch = nombre_archivo   ,
+                path = config.PATH_DATASET_GOES ,
+            )
+            
+
+        # Concatenamos
+        #lista_array       = np.concatenate(lista_array,axis=0)
+        #lista_dqf         = np.concatenate(lista_dqf,axis=0)
+        #lista_t           = np.concatenate(lista_t,axis=0)
+        #lista_coordenadas = np.concatenate(lista_coordenadas,axis=0)
+
+def separador_GOES(banda):
+    print(f"Iniciando separación para banda {banda}...")
+    lista_index_localidades       = np.array_split(np.arange(num_comunidades),config.NUM_LOCALIDADES_EN_CHUNK)
+    lista_coordenadas_localidades = np.array_split(coordenadas_mask,config.NUM_LOCALIDADES_EN_CHUNK)
+    chunks_procesados  = 0
+    tiempo_o = time.time()
+    for num_chunk in range(config.NUM_LOCALIDADES_EN_CHUNK):
+        index_localidades = lista_index_localidades[num_chunk]
+        coordenadas       = lista_coordenadas_localidades[num_chunk]
+        lista_lat , lista_lon = coordenadas[:,0] , coordenadas[:,1]
+        chunk = Chunk(index_localidades,lista_lat,lista_lon,banda=banda)
+        chunk.recopilar_datos()
+
         chunks_procesados += 1
         print(f"Chunks procesados {chunks_procesados} de {config.NUM_LOCALIDADES_EN_CHUNK}")
         t = time.time()
         t = round((t-tiempo_o)/60 , 2)
         print(f"Tiempo transcurrido {t} min\n")
-        
-    print(f"Proceso terminado para la banda {banda}!")
 
 if __name__ == "__main__":
-    # Ordenamos los datos por localidad, se hará en chunks para hacer eficiente.
-    print("Iniciando ordenamiento de los datos...")
     for banda in config.BANDAS:
-        print(f"Ordenando banda {banda}...\n")
         separador_GOES(banda)
