@@ -91,7 +91,11 @@ def pre_procesado_GOES(banda):
     print("Pre-procesado terminado!")
 
 if __name__ == "__main__":
-    texto = """ SCRIPT DE PREPROCESADO\n"""
+    texto = """
+---------------------- 
+SCRIPT DE PREPROCESADO
+----------------------\n"""
+    
     print(texto)
     print("Iniciando preprocesado de los datos descargados...")
     for banda in config.BANDAS:

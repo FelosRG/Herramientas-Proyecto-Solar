@@ -136,5 +136,12 @@ def separador_GOES(banda):
         print(f"Tiempo transcurrido {t} min\n")
 
 if __name__ == "__main__":
+    texto = """
+-----------------------------------------
+SCRIPT DE SEPARACIÓN DE DATOS SATÉLITALES
+-----------------------------------------
+"""
+    print(texto)
     for banda in config.BANDAS:
         separador_GOES(banda)
+    print("Script de separación finalizado!")

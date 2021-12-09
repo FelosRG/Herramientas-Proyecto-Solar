@@ -118,8 +118,6 @@ def procesar_batch(nombre_batch):
     serie_tiempo  = np.array(serie_tiempo)
     num_series    = serie_tiempo.shape[0]
 
-    print(serie_tiempo.shape)
-
     # Obtenemos los datos asociados a las bandas.
     datos_GOES = {}
     for i,banda in zip(range(len(BANDAS)),BANDAS):
@@ -158,6 +156,26 @@ def procesar_batch(nombre_batch):
     return datos_GOES,datos_NSRDB
 
 if __name__ == "__main__":
+    texto = f"""
+--------------------------------
+SCRIPT DE GENERACIÓN DE DATASETS
+--------------------------------
+
+    Configuración:
+
+    * Bandas : {BANDAS}
+    * Ventana: {VENTANA}
+    * Longitud Serie de Tiempo: {LONGITUD_SECUENCIA}
+    * Umbral Sincronización   : {UMBRAL_SINCRONIZACIÓN}
+    * Datos de radiación solar: {DATOS_NSRDB}
+
+------------------------------------
+"""
+    print(texto)
+
+    continuar = input("Continuar ? [y/n]")
+    if continuar != "y": sys.exit()
+
     num_batch_procesados = 0
     num_batch_totales    = np.sum(mask)
 

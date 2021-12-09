@@ -143,8 +143,12 @@ def guardar_batch(datos_array,datos_DQF,datos_t,datos_coordenadas,banda,nombre_b
 
 
 if __name__ == "__main__":
+    
+    print("")
+    print("----------------------------")
+    print("SCRIPT DE PRE-CONFIGURACIÓN ")
+    print("----------------------------\n")
 
-    print("SCRIPT DE PRE-CONFIGURACIÓN \n")
 
     # Generamos el mask espacial de los datos.
     print("Generando el mask espacial ...")
