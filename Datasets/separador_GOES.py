@@ -108,13 +108,6 @@ class Chunk:
                 nombre_batch = nombre_archivo   ,
                 path = config.PATH_DATASET_GOES ,
             )
-            
-
-        # Concatenamos
-        #lista_array       = np.concatenate(lista_array,axis=0)
-        #lista_dqf         = np.concatenate(lista_dqf,axis=0)
-        #lista_t           = np.concatenate(lista_t,axis=0)
-        #lista_coordenadas = np.concatenate(lista_coordenadas,axis=0)
 
 def separador_GOES(banda):
     print(f"Iniciando separación para banda {banda}...")

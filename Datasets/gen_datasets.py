@@ -27,7 +27,7 @@ LONGITUD_SECUENCIA    = 1
 UMBRAL_SINCRONIZACIÓN = 3  # minutos (recomendado 2).
 UMBRAL_SERIE          = 7  # minutos (recomendado 7), se ignora si LONGITUD_SECUENCIA = 1. 
 
-DATOS_NSRDB = ["GHI","Solar Zenith Angle","Clearsky GHI"]
+DATOS_NSRDB = ["Year","Month","Day","Hour","Minute","GHI","Solar Zenith Angle","Clearsky GHI"]
 # Guarda el datset final completo en un único archivo.
 UNIR_BATCHES = True
 
@@ -51,6 +51,10 @@ import lib.libSinc as Sinc
 import lib.f_generales as general
 
 from   pathlib import Path
+
+# Añadimos columnas de coordendas!!
+DATOS_NSRDB.append("Latitud")
+DATOS_NSRDB.append("Longitud")
 
 # Abrimos el archivo de pre-configuración.
 print("Cargando archivo de configuración...")
@@ -90,8 +94,9 @@ def datetime_NSRDB(df):
     return lista_datetime
 
 # Scritpt de procesado de batch
-def procesar_batch(nombre_batch):
-
+def procesar_batch(lat,lon):
+    # Generamos el nombre de guardado.
+    nombre_batch = general.asignarNombreArchivo(lat=lat,lon=lon,extensión="")
     # Generamos un dato con temporalidad por cada banda.
     datos_temporales = []
     for banda in BANDAS:
@@ -100,6 +105,7 @@ def procesar_batch(nombre_batch):
             Arrays = batch["Datos"][()]
             DQF    = batch["DQF"][()]
             T      = batch["T"][()]
+        # Transformaos a datetime la lista de tiempo UNIX.
         lista_datetime = datetime_bandas(T)
 
         Datos = np.stack([Arrays,DQF],axis=1)
@@ -108,6 +114,13 @@ def procesar_batch(nombre_batch):
 
     # Le añadimos el dato temporal de los datos de NSRDB.
     df = pd.read_csv(config.PATH_DESCARGA_NSRDB + nombre_batch + "csv")
+
+    # Operaciones sobre el dataframe.
+    Latitud  = np.ones(shape=(len(df),))*lat
+    Longitud = np.ones(shape=(len(df),))*lon
+    df["Latitud"]  = Latitud
+    df["Longitud"] = Longitud
+    
     lista_datetime = datetime_NSRDB(df)
     datos_temporales.append(Sinc.DatosTemporales(lista_datos=df,lista_datetime=lista_datetime))
 
@@ -143,10 +156,6 @@ def procesar_batch(nombre_batch):
     for columna in DATOS_NSRDB:
         datos_NSRDB[columna] = df[columna].iloc[serie_tiempo[:,-1]].values
 
-    for banda in BANDAS:
-        array = datos_GOES[str(banda)]
-        datos_GOES[str(banda)] = array
-    
     # Revisamos datos inválidos.
     indices_validos  = []
     for i in range(datos_GOES[str(BANDAS[0])].shape[0]):
@@ -205,8 +214,7 @@ SCRIPT DE GENERACIÓN DE DATASETS
         for j in range(config.RESOLUCIÓN):
             if mask[i,j]:
                 lat , lon = Lat[i,j],Lon[i,j]
-                nombre_batch = general.asignarNombreArchivo(lat=lat,lon=lon,extensión="")
-                batch_datos_GOES,batch_datos_NSRDB = procesar_batch(nombre_batch)
+                batch_datos_GOES,batch_datos_NSRDB = procesar_batch(lat,lon)
                 if UNIR_BATCHES:
                     # Juntamos todo en un diccionario.
                     for banda in BANDAS:

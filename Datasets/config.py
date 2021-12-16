@@ -23,7 +23,7 @@ HORA_FINAL_UTC  , MIN_FINAL_UTC  = 20 , 00 #23 , 59
 # CONFIGURACIÓN DE LA GENERACIÓN DE DATASETS
 #-------------------------------------------:
 RESOLUCIÓN      = 10#15   # --> Resolución del grid con el que se divirá méxico. (15 valor recomendado)
-VENTANA_RECORTE = 100     # --> Tamaño de la ventana de recoorte alrededor del punto en el pre-procesado.
+VENTANA_RECORTE = 5     # --> Tamaño de la ventana de recoorte alrededor del punto en el pre-procesado.
 
 # Si hay problemas con la memoria ram subir este numero por ejemplo a 10.
 NUM_LOCALIDADES_EN_CHUNK = 5
