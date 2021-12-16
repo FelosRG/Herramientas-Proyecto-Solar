@@ -68,8 +68,8 @@ def pre_procesado_GOES(banda):
                         array_datos_V = GOES.cortarYcentrar_GOES(array_datos,px_x,px_y,ventana=config.VENTANA_RECORTE)
                         array_DQF_V   = GOES.cortarYcentrar_GOES(array_DQF  ,px_x,px_y,ventana=config.VENTANA_RECORTE)
                         # Agregamos a la lista de guardado.
-                        datos_array.append(np.array(array_datos_V).astype(np.int16))
-                        datos_DQF.append(np.array(array_DQF_V).astype(np.int8))
+                        datos_array.append(np.array(array_datos_V))
+                        datos_DQF.append(np.array(array_DQF_V))
                         datos_t.append(t)
                         datos_coordenadas[0].append(lat) , datos_coordenadas[1].append(lon)
                         # Métricas.
