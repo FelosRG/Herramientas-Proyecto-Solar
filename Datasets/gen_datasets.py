@@ -20,8 +20,7 @@ IMPORTANTE!
 # ---------------
 
 # Datos satélitales que conformarán el dataset final.
-VENTANA = 40    # --> Ventana de recorte.
-BANDAS  = [4,13]   # --> Bandas que conformarán el dataset.
+BANDAS  = [11,13,16] # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  
@@ -66,7 +65,7 @@ for num_banda in BANDAS:
 
 def nombre_dataset():
     nombre = ""
-    nombre += f"Ventana_{VENTANA}-"
+    nombre += f"Ventana_{config.VENTANA_RECORTE}-"
     nombre += f"Bandas_"
     for banda in BANDAS:
         nombre += f"{banda}_"
@@ -123,11 +122,21 @@ def procesar_batch(nombre_batch):
     try:
         for i,banda in zip(range(len(BANDAS)),BANDAS):
             datos_GOES[str(banda)] = np.take(np.array(datos_temporales[i].lista_datos),serie_tiempo[:,i],axis=0)
-    except IndexError:
+    except IndexError as err:
         print("Sucedio un error en la extración de los datos de las bandas desde la serie de tiempo.")
         print("Shape serie _tiempo  : ",np.array(serie_tiempo).shape)
-        print("Shape lista de datos :" ,np.array(datos_temporales[i].lista_datos))
-        raise IndexError("Error en la extración de datos de la serie de tiempo. Una causa puede ser el haber cambiado la configuración. Probar en borrar la carpeta de archivos descargados y pre-procesados.")
+        mensaje_error = """
+"Error en la extración de datos de la serie de tiempo:
+
+* Una causa puede ser un umbral de sincronizacion muy por abajo. Se recomienda
+  aumentar el umbral.
+
+* Si no funciona lo anterior otra causa puede ser el haber cambiado recientemente 
+  la configuración  y esta ya no es compatible con los archivos preprocesados. 
+  Probar en borrar la carpeta de archivos descargados y pre-procesados.
+
+""" 
+        raise IndexError(mensaje_error)
 
     # Obtenemos los datos asociados a NSRDB
     datos_NSRDB = {} 
@@ -136,7 +145,6 @@ def procesar_batch(nombre_batch):
 
     for banda in BANDAS:
         array = datos_GOES[str(banda)]
-        array = array[:,:,config.VENTANA_RECORTE - VENTANA : config.VENTANA_RECORTE + VENTANA , config.VENTANA_RECORTE - VENTANA : config.VENTANA_RECORTE + VENTANA]
         datos_GOES[str(banda)] = array
     
     # Revisamos datos inválidos.
@@ -170,7 +178,7 @@ SCRIPT DE GENERACIÓN DE DATASETS
     Configuración:
 
     * Bandas : {BANDAS}
-    * Ventana: {VENTANA}
+    * Ventana: {config.VENTANA_RECORTE}
     * Longitud Serie de Tiempo: {LONGITUD_SECUENCIA}
     * Umbral Sincronización   : {UMBRAL_SINCRONIZACIÓN}
     * Datos de radiación solar: {DATOS_NSRDB}
