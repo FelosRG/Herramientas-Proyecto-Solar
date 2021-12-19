@@ -636,8 +636,16 @@ def _identificarBandas(df_files):
         file_name = str(line)
     
         # Obtenemos los indices donde se encuentra la información de la banda. -M6C%%_
-        match  = re.search(r"-M6C\d\d_",file_name)
-        span   = match.span()
+        try:
+            match  = re.search(r"-M6C\d\d_",file_name)
+            span   = match.span()
+        except AttributeError as err:
+            print("df_files[\"file\"]:",df_files["file"])
+            print("\nfile_name (seleccionado del bucle): ",file_name)
+            print("match: ",match)
+            print("span: ",span)
+            raise err
+
 
         # Número de banda. (En string)
         banda = file_name[span[1]-3:span[1]-1]
@@ -714,10 +722,16 @@ def descargaIntervaloGOES16(producto,
     # Obtenemos el dataframe con los elementos más recientes de cada banda.
     df = _goes_file_df(satellite="noaa-goes16",product=producto,start=start,end=end,refresh=True)
 
+    
     # Identificamos cada archivo con la banda a la que corresponde.
     if banda != None:
-        df = _identificarBandas(df)
-        df = df[df["Banda"] == banda]
+        try:
+            print("\n-----------DEBUG----------")
+            print("banda: ",banda)
+            print("len(df): ",len(df))
+            df = _identificarBandas(df) # Puse mas debug en la función.
+            df = df[df["Banda"] == banda]
+        except
 
     descargados = 0
     a_descargar = len(df)

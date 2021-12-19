@@ -27,7 +27,15 @@ LONGITUD_SECUENCIA    = 1
 UMBRAL_SINCRONIZACIÓN = 3  # minutos (recomendado 2).
 UMBRAL_SERIE          = 7  # minutos (recomendado 7), se ignora si LONGITUD_SECUENCIA = 1. 
 
+# Datos que se tomarán del NSRDB.
 DATOS_NSRDB = ["Year","Month","Day","Hour","Minute","GHI","Solar Zenith Angle","Clearsky GHI"]
+
+# Configuración de la variable objetivo
+
+DATO_OBJETIVO = "GHI"
+# Variable objetivo [Minutos]
+VENTANA_PREDICCIÓN = 0 # 0 Significa que es estimación.
+
 # Guarda el datset final completo en un único archivo.
 UNIR_BATCHES = True
 
