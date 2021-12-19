@@ -36,12 +36,16 @@ def descarga_banda_GOES(banda):
                 config.HORA_FINAL_UTC   ,
                 config.MIN_FINAL_UTC    )       
             # Descargamos los datos satélitales.
-            GOES.descargaIntervaloGOES16(
-                producto        = config.PRODUCTO    ,
-                datetime_inicio = inicio      ,
-                datetime_final  = final       ,
-                banda       = banda           ,
-                output_path = path_batch      )
+            try:
+                GOES.descargaIntervaloGOES16(
+                    producto        = config.PRODUCTO    ,
+                    datetime_inicio = inicio      ,
+                    datetime_final  = final       ,
+                    banda       = banda           ,
+                    output_path = path_batch      )
+            except AttributeError as err:
+                print("No se encontraron datos bajo el Scan Mode 3 o 6 del satélite. Omitiendo descarga...")
+            
             # Métricas.
             tiempo = time.time()
             tiempo_transcurrido = round(( tiempo - tiempo_o ) / 60,1)

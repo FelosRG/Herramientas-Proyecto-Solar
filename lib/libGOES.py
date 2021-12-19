@@ -636,17 +636,12 @@ def _identificarBandas(df_files):
         file_name = str(line)
     
         # Obtenemos los indices donde se encuentra la información de la banda. -M6C%%_
-        try:
-            match  = re.search(r"-M6C\d\d_",file_name)
-            span   = match.span()
-        except AttributeError as err:
-            print("\n-----------DEBUG----------")
-            print("df_files[\"file\"]:",df_files["file"])
-            print("\nfile_name (seleccionado del bucle): ",file_name)
-            print("match: ",match)
-            print("span: ",span)
-            raise errs
+        # Nota, solo nos interesa las imágenes del Scan Mode 3 o 6, siendo el modo 6 "M6" el modelo por default del satélite.
 
+        match  = re.search(r"-M6C\d\d_",file_name)
+        if match == None:
+            match = re.search(r"-M3C\d\d_",file_name)
+        span   = match.span()
 
         # Número de banda. (En string)
         banda = file_name[span[1]-3:span[1]-1]
@@ -726,13 +721,8 @@ def descargaIntervaloGOES16(producto,
     
     # Identificamos cada archivo con la banda a la que corresponde.
     if banda != None:
-        try:
-            df = _identificarBandas(df) # Puse mas debug en la función.
-            df = df[df["Banda"] == banda]
-        except AttributeError:
-            print("banda: ",banda)
-            print("len(df): ",len(df))
-
+        df = _identificarBandas(df) # Puse mas debug en la función.
+        df = df[df["Banda"] == banda]
 
     descargados = 0
     a_descargar = len(df)
