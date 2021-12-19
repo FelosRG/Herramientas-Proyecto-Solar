@@ -640,11 +640,12 @@ def _identificarBandas(df_files):
             match  = re.search(r"-M6C\d\d_",file_name)
             span   = match.span()
         except AttributeError as err:
+            print("\n-----------DEBUG----------")
             print("df_files[\"file\"]:",df_files["file"])
             print("\nfile_name (seleccionado del bucle): ",file_name)
             print("match: ",match)
             print("span: ",span)
-            raise err
+            raise errs
 
 
         # Número de banda. (En string)
@@ -726,12 +727,12 @@ def descargaIntervaloGOES16(producto,
     # Identificamos cada archivo con la banda a la que corresponde.
     if banda != None:
         try:
-            print("\n-----------DEBUG----------")
-            print("banda: ",banda)
-            print("len(df): ",len(df))
             df = _identificarBandas(df) # Puse mas debug en la función.
             df = df[df["Banda"] == banda]
-        except
+        except AttributeError:
+            print("banda: ",banda)
+            print("len(df): ",len(df))
+
 
     descargados = 0
     a_descargar = len(df)
