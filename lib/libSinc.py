@@ -8,7 +8,7 @@ def revisar_orden_temporal(lista_datetime):
         datetime_2 = lista_datetime[i+1]
         datetime_1 = lista_datetime[i]
         if (datetime_2 - datetime_1).total_seconds() < 0:
-            raise ValueError("Orden temporal de la lista no respetado!")
+            raise ValueError(f"Orden temporal de la lista no respetado:\nDatetime 1 {datetime_1} , Datetime 2 {datetime_2}")
 
 class DatosTemporales:
     def __init__(self,lista_datos,lista_datetime):
