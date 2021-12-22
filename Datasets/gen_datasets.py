@@ -24,17 +24,19 @@ BANDAS  = [11,13,16] # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
 LONGITUD_SECUENCIA    = 1  
-UMBRAL_SINCRONIZACIÓN = 3  # minutos (recomendado 2).
+UMBRAL_SINCRONIZACIÓN = 4  # minutos (recomendado 2).
 UMBRAL_SERIE          = 7  # minutos (recomendado 7), se ignora si LONGITUD_SECUENCIA = 1. 
 
 # Datos que se tomarán del NSRDB.
-DATOS_NSRDB = ["Year","Month","Day","Hour","Minute","GHI","Solar Zenith Angle","Clearsky GHI"]
+DATOS_SOLARES = ["Year","Month","Day","Hour","Minute","GHI","Solar Zenith Angle","Clearsky GHI","UV"]
 
 # Configuración de la variable objetivo
-
 DATO_OBJETIVO = "GHI"
-# Variable objetivo [Minutos]
-VENTANA_PREDICCIÓN = 0 # 0 Significa que es estimación.
+
+
+# Escalado: Todos las bandas se escalan a un mismo tamaño.
+# (Facilita el manejo de bandas con resoluciones diferentes sin embargo el dataset final tendrá un mayor tamaño.)
+ESCALAR = False
 
 # Guarda el datset final completo en un único archivo.
 UNIR_BATCHES = True
@@ -43,8 +45,6 @@ UNIR_BATCHES = True
 
 import os
 import sys
-
-from numpy.core.numeric import indices
 _path_script    = os.path.realpath(__file__) 
 _path_script    = "/".join(_path_script.split("/")[:-1])
 sys.path.append(_path_script + "/../")
@@ -52,6 +52,7 @@ sys.path.append(_path_script + "/../")
 import h5py
 import config
 import datetime
+import scipy.ndimage
 import numpy  as np
 import pandas as pd 
 import lib.libGOES as goes
@@ -60,14 +61,21 @@ import lib.f_generales as general
 
 from   pathlib import Path
 
+if config.DATOS_SOLARES == "NSRDB":
+    PATH_DATOS_SOLARES = config.PATH_DESCARGA_NSRDB
+elif config.DATOS_SOLARES == "WU":
+    PATH_DATOS_SOLARES = config.PATH_DESCARGA_WU
+else:
+    raise ValueError("No se ha puesto un nombre de \"DATOS_SOLARES\" valido.\nOpciones válidas: \"NSRDB\",\"WU\"")
+
 # Añadimos columnas de coordendas!!
-DATOS_NSRDB.append("Latitud")
-DATOS_NSRDB.append("Longitud")
+DATOS_SOLARES.append("Latitud")
+DATOS_SOLARES.append("Longitud")
 
 # Abrimos el archivo de pre-configuración.
 print("Cargando archivo de configuración...")
 días_descarga = config.cargar_mask_temporal()
-Lat,Lon,mask  = config.cargar_mask_espacial()
+Lat,Lon       = config.cargar_mask_espacial()
 Path(config.PATH_DATASET_FINAL).mkdir(parents=True,exist_ok=True)
 
 # Revisamos que las bandas puestas estén descargada.
@@ -82,7 +90,7 @@ def nombre_dataset():
     for banda in BANDAS:
         nombre += f"{banda}_"
     nombre += f"-Secuencia_{LONGITUD_SECUENCIA}-"
-    nombre += f"Resolucion_{config.RESOLUCIÓN}-NSRDB"
+    nombre += f"Resolucion_{config.RESOLUCIÓN}-{config.DATOS_SOLARES}"
     return nombre + ".h5"
 
 # Definimos los callbacks para obtener la lista de datetime.
@@ -91,8 +99,8 @@ def datetime_bandas(T):
     lista_datetime = [goes.obtenerFecha_GOES(int(t),return_datetime=True) for t in T]
     return lista_datetime
 
-def datetime_NSRDB(df):
-    "Obtenemos lista de objetos datetime del NSRDB"
+def datetime_datos_Solares(df):
+    "Obtenemos lista de objetos datetime de los datos solares."
     año = df["Year"].values
     mes = df["Month"].values
     dia = df["Day"].values
@@ -113,15 +121,21 @@ def procesar_batch(lat,lon):
             Arrays = batch["Datos"][()]
             DQF    = batch["DQF"][()]
             T      = batch["T"][()]
+        # Escalamos batch
+        if ESCALAR:
+            escalado = config.resolución_bandas[banda]*2
+            if escalado != 1:
+                Arrays = scipy.ndimage.zoom(Arrays,escalado,order=0,mode="nearest")
+                DQF    = scipy.ndimage.zoom(DQF,escalado,order=0,mode="nearest")
+        
         # Transformaos a datetime la lista de tiempo UNIX.
         lista_datetime = datetime_bandas(T)
-
         Datos = np.stack([Arrays,DQF],axis=1)
         Datos = list(Datos)
         datos_temporales.append(Sinc.DatosTemporales(lista_datos=Datos,lista_datetime=lista_datetime))
 
     # Le añadimos el dato temporal de los datos de NSRDB.
-    df = pd.read_csv(config.PATH_DESCARGA_NSRDB + nombre_batch + "csv")
+    df = pd.read_csv(PATH_DATOS_SOLARES + nombre_batch + "csv")
 
     # Operaciones sobre el dataframe.
     Latitud  = np.ones(shape=(len(df),))*lat
@@ -129,8 +143,13 @@ def procesar_batch(lat,lon):
     df["Latitud"]  = Latitud
     df["Longitud"] = Longitud
     
-    lista_datetime = datetime_NSRDB(df)
-    datos_temporales.append(Sinc.DatosTemporales(lista_datos=df,lista_datetime=lista_datetime))
+    lista_datetime = datetime_datos_Solares(df)
+    try:
+        datos_temporales.append(Sinc.DatosTemporales(lista_datos=df,lista_datetime=lista_datetime))
+    except ValueError as err:
+        print(f"Batch con el error: {lat},{lon}")
+        raise
+        
 
     # Iniciamos sincronización
     sincronizador = Sinc.Sincronizador(datos_temporales,verbose=True)
@@ -144,10 +163,10 @@ def procesar_batch(lat,lon):
         for i,banda in zip(range(len(BANDAS)),BANDAS):
             datos_GOES[str(banda)] = np.take(np.array(datos_temporales[i].lista_datos),serie_tiempo[:,i],axis=0)
     except IndexError as err:
-        print("Sucedio un error en la extración de los datos de las bandas desde la serie de tiempo.")
-        print("Shape serie _tiempo  : ",np.array(serie_tiempo).shape)
-        mensaje_error = """
+        mensaje_error = f"""
 "Error en la extración de datos de la serie de tiempo:
+
+Shape serie_tiempo: {np.array(serie_tiempo).shape}
 
 * Una causa puede ser un umbral de sincronizacion muy por abajo. Se recomienda
   aumentar el umbral.
@@ -160,9 +179,9 @@ def procesar_batch(lat,lon):
         raise IndexError(mensaje_error)
 
     # Obtenemos los datos asociados a NSRDB
-    datos_NSRDB = {} 
-    for columna in DATOS_NSRDB:
-        datos_NSRDB[columna] = df[columna].iloc[serie_tiempo[:,-1]].values
+    datos_SOLARES = {} 
+    for columna in DATOS_SOLARES:
+        datos_SOLARES[columna] = df[columna].iloc[serie_tiempo[:,-1]].values
 
     # Revisamos datos inválidos.
     indices_validos  = []
@@ -181,10 +200,10 @@ def procesar_batch(lat,lon):
         datos = datos_GOES[str(banda)][:,0,:,:]
         datos = datos[indices_validos,:,:]
         datos_GOES[str(banda)] = datos
-    for columna in DATOS_NSRDB:
-        datos_NSRDB[columna] = datos_NSRDB[columna][indices_validos]
+    for columna in DATOS_SOLARES:
+        datos_SOLARES[columna] = datos_SOLARES[columna][indices_validos]
     
-    return datos_GOES,datos_NSRDB
+    return datos_GOES,datos_SOLARES
 
 if __name__ == "__main__":
     texto = f"""
@@ -198,7 +217,7 @@ SCRIPT DE GENERACIÓN DE DATASETS
     * Ventana: {config.VENTANA_RECORTE}
     * Longitud Serie de Tiempo: {LONGITUD_SECUENCIA}
     * Umbral Sincronización   : {UMBRAL_SINCRONIZACIÓN}
-    * Datos de radiación solar: {DATOS_NSRDB}
+    * Datos de radiación solar: {DATOS_SOLARES}
 
 ------------------------------------
 """
@@ -208,32 +227,34 @@ SCRIPT DE GENERACIÓN DE DATASETS
     if continuar != "y": sys.exit()
 
     num_batch_procesados = 0
-    num_batch_totales    = np.sum(mask)
+    num_batch_totales    = len(Lat)
 
     # diccionarios para concatenar datos
-    datos_GOES,datos_NSRDB = {} , {}
+    datos_GOES,datos_SOLARES = {} , {}
     for banda in BANDAS:
         datos_GOES[str(banda)] = []
-    for columna in DATOS_NSRDB:
-        datos_NSRDB[columna] = []
+    for columna in DATOS_SOLARES:
+        datos_SOLARES[columna] = []
     
     # Obtenemos el nombre del batch (sin la extención).
-    for i in range(config.RESOLUCIÓN):
-        for j in range(config.RESOLUCIÓN):
-            if mask[i,j]:
-                lat , lon = Lat[i,j],Lon[i,j]
-                batch_datos_GOES,batch_datos_NSRDB = procesar_batch(lat,lon)
-                if UNIR_BATCHES:
-                    # Juntamos todo en un diccionario.
-                    for banda in BANDAS:
-                        datos_GOES[str(banda)].append(batch_datos_GOES[str(banda)])
-                    for columna in DATOS_NSRDB:
-                        datos_NSRDB[columna].append(batch_datos_NSRDB[columna])
-                else:
-                    raise NotImplementedError("Aun no implemento el caso de no unir batches.")
-
-                num_batch_procesados += 1
-                print(f"Batch procesados {num_batch_procesados} de {int(num_batch_totales)}, progreso {round(100*num_batch_procesados/num_batch_totales,1)}%")
+    for i in range(len(Lat)):
+        lat , lon = Lat[i],Lon[i]
+        try:
+            batch_datos_GOES,batch_datos_SOLARES = procesar_batch(lat,lon)
+        except IndexError as err:
+            print(f"Durante el procesamiento del batch en {lat} {lon} ha ocurrido el siguiente error:\n{err}")
+        else:
+            if UNIR_BATCHES:
+                # Juntamos todo en un diccionario.
+                for banda in BANDAS:
+                    datos_GOES[str(banda)].append(batch_datos_GOES[str(banda)])
+                for columna in DATOS_SOLARES:
+                    datos_SOLARES[columna].append(batch_datos_SOLARES[columna])
+            else:
+                raise NotImplementedError("Aun no implemento el caso de no unir batches.")
+        finally:
+            num_batch_procesados += 1
+            print(f"Batch procesados {num_batch_procesados} de {int(num_batch_totales)}, progreso {round(100*num_batch_procesados/num_batch_totales,1)}%")
     
     # Concatenamos y guardamos.
     print("\nGuardando datos...")
@@ -242,11 +263,11 @@ SCRIPT DE GENERACIÓN DE DATASETS
         for banda in BANDAS:
             datos_GOES[str(banda)] = np.concatenate(datos_GOES[str(banda)],axis=0)
             dataset.create_dataset(name=str(banda),data=datos_GOES[str(banda)],dtype=np.float32)
-        for columna in DATOS_NSRDB:
-            datos_NSRDB[columna] = np.concatenate(datos_NSRDB[columna],axis=0)
-            dataset.create_dataset(name=columna,data=datos_NSRDB[columna])
+        for columna in DATOS_SOLARES:
+            datos_SOLARES[columna] = np.concatenate(datos_SOLARES[columna],axis=0)
+            dataset.create_dataset(name=columna,data=datos_SOLARES[columna])
     
-    print(f"Se ha creado el dataset {nombre_dataset()} con {len(datos_NSRDB[columna])} datos" )
+    print(f"Se ha creado el dataset {nombre_dataset()} con {len(datos_SOLARES[columna])} datos" )
     print("Script de generación de dataset terminado!")
 
 

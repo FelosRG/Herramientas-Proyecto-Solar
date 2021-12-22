@@ -2,6 +2,7 @@
 # CONFIGURACIONES GENERALES
 #--------------------------
 
+DATOS_SOLARES = "WU" # "NSRDB" o "WU"
 # --> Año de los datos que conformarán el dataset. (Solo disponibles 2018,2019,2020)
 AÑO_DATOS = 2020 
 
@@ -9,8 +10,8 @@ AÑO_DATOS = 2020
 #----------------------------------------------------
 
  # --> Días del año del que se descargarán los datos. (12 valor recomendado)
-DÍAS   = 3           #8
-BANDAS = [11,13,16]  #[4,6,7,8,9,10,11,12,13,14,15,16]
+DÍAS   = 3           # 8
+BANDAS = [11,13,16]  # Bandas disponibles: 1-16
 
 # No meodificar estos
 PRODUCTO = "ABI-L1b-RadC"
@@ -23,7 +24,7 @@ HORA_FINAL_UTC  , MIN_FINAL_UTC  = 20 , 00 #23 , 59
 # CONFIGURACIÓN DE LA GENERACIÓN DE DATASETS
 #-------------------------------------------:
 RESOLUCIÓN      = 10#15   # --> Resolución del grid con el que se divirá méxico. (15 valor recomendado)
-VENTANA_RECORTE = 5     # --> Tamaño de la ventana de recoorte alrededor del punto en el pre-procesado.
+VENTANA_RECORTE = 10      # [km] --> Tamaño de la ventana de recoorte alrededor del punto en el pre-procesado.
 
 # Si hay problemas con la memoria ram subir este numero por ejemplo a 10.
 NUM_LOCALIDADES_EN_CHUNK = 5
@@ -36,7 +37,6 @@ INF_LON , SUP_LON = -110.8 , -93.1
 import os
 import sys
 
-from h5py._hl.dataset import Dataset
 _path_script    = os.path.realpath(__file__) 
 _path_script    = "/".join(_path_script.split("/")[:-1])
 sys.path.append(_path_script + "/../")
@@ -44,18 +44,23 @@ sys.path.append(_path_script + "/../")
 import h5py
 import pickle
 import datetime
-import numpy as np
-from  pathlib import Path
+import numpy  as np
+import pandas as pd
+from   pathlib import Path
 import lib.f_generales as general
 
 PATH_DESCARGA_GOES  = _path_script + "/Descargas/GOES/"
 PATH_DESCARGA_NSRDB = _path_script + "/Descargas/NSRDB/"
+PATH_DESCARGA_WU    = _path_script + "/Descargas/WU/"
 
 PATH_PREPROCESADO_GOES = _path_script + "/Preprocesado_GOES/Temporal/"
 PATH_DATASET_GOES      = _path_script + "/Preprocesado_GOES/"
 
+PATH_CSV_ESTACIONES = _path_script + "/../Recursos/EstacionesMetereológicas_WU.csv"
+PATH_MAPA_ELEVACIÓN = _path_script + "/../Recursos/Altura_CONUS_1500_2500.h5"
 PATH_SHAPEFILE = _path_script + "/../Recursos/Shapefiles/shape_file.shp"
 PATH_CONFIG    = _path_script + "/Config"
+PATH_RECURSOS  = _path_script + "/../Recursos"
 
 PATH_DATASET_FINAL = _path_script + "/Datasets/"
 
@@ -78,7 +83,54 @@ fill_value = {
     16:1023
     }
 
+resolución_bandas = {
+    1:1,
+    2:0.5,
+    3:1,
+    4:2,
+    5:1,
+    6:2,
+    7:2,
+    8:2,
+    9:2,
+    10:2,
+    11:2,
+    12:2,
+    13:2,
+    14:2,
+    15:2,
+    16:2,
+}
+
+# 0: bandas refectivas.
+# 1: bandas emisivas.
+clasificación_bandas = {
+    1:0,
+    2:0,
+    3:0,
+    4:0,
+    5:0,
+    6:0,
+    7:1,
+    8:1,
+    9:1,
+    10:1,
+    11:1,
+    12:1,
+    13:1,
+    14:1,
+    15:1,
+    16:1,
+}
+
 FLAGS_GOES = [2,3,4]
+
+
+
+# AJUSTES DE LA CONFIGURACIÓN ----------------------------------------
+
+# Pasamos de Km a pixeles, (tomando como referencia la resolución de 2k)
+VENTANA_RECORTE = int(VENTANA_RECORTE / 2)
 
 def cargar_mask_espacial():
     """
@@ -90,10 +142,12 @@ def cargar_mask_espacial():
     except FileNotFoundError:
         mensaje = "Se requiere ejecutar primero el script config.py primero."
         raise FileNotFoundError(mensaje)
+
     Lat = dic_config["Lat"]
     Lon = dic_config["Lon"]
-    mask = dic_config["mask espacial"]
-    return Lat , Lon , mask
+
+    return Lat , Lon
+        
 
 def cargar_mask_temporal(retornar_datetime:bool=False):
     """
@@ -153,14 +207,30 @@ if __name__ == "__main__":
     # Generamos el mask espacial de los datos.
     print("Generando el mask espacial ...")
 
-    Lon , Lat , Mask_espacial = general.generar_mask_espacial(
-        INF_LAT=INF_LAT,
-        SUP_LAT=SUP_LAT,
-        INF_LON=INF_LON,
-        SUP_LON=SUP_LON,
-        RESOLUCIÓN=RESOLUCIÓN,
-        PATH_SHAPEFILE=PATH_SHAPEFILE,
-    )
+    if DATOS_SOLARES == "NSRDB":
+        Lon , Lat , Mask_espacial = general.generar_mask_espacial(
+            INF_LAT=INF_LAT,
+            SUP_LAT=SUP_LAT,
+            INF_LON=INF_LON,
+            SUP_LON=SUP_LON,
+            RESOLUCIÓN=RESOLUCIÓN,
+            PATH_SHAPEFILE=PATH_SHAPEFILE,
+        )
+        lista_lat , lista_lon  = [] , []
+        for i in range(RESOLUCIÓN):
+            for j in range(RESOLUCIÓN):
+                lat , lon = Lat[i,j] , Lon[i,j]
+                if Mask_espacial[i,j]:
+                    lista_lat.append(lat)
+                    lista_lon.append(lon)
+    
+    elif DATOS_SOLARES == "WU":
+        df_WU = pd.read_csv(PATH_CSV_ESTACIONES)
+        lista_lat , lista_lon = list(df_WU["Latitud"].values) , list(df_WU["Longitud"].values)
+    
+    else:
+        raise ValueError("No se ha puesto un nombre de \"DATOS_SOLARES\" valido.\nOpciones válidas: \"NSRDB\",\"WU\"")
+
 
     # Generamos el mask temporal de los datos
     print("Generando el mask temporal...")
@@ -171,9 +241,8 @@ if __name__ == "__main__":
     print("Guardando la configuración...")
 
     dic_config = {
-        "Lat"  : Lat ,
-        "Lon"  : Lon ,
-        "mask espacial" : Mask_espacial,
+        "Lat"  : lista_lat ,
+        "Lon"  : lista_lon ,
         "mask temporal" : Mask_temporal,
     }
 

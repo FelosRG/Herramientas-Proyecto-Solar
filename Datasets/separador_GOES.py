@@ -17,22 +17,14 @@ from   pathlib import Path
 import config
 
 # Cargando configuraciones.
-Lat,Lon,mask  = config.cargar_mask_espacial()
+Lat,Lon       = config.cargar_mask_espacial()
 días_descarga = config.cargar_mask_temporal()
+
 batch_totales   = len(días_descarga)
-num_comunidades = int(np.sum(mask))
+num_comunidades = len(Lat)
 
 # Obtenemos las latitudes y Longitudes
-lista_lat , lista_lon = [] , []
-for i in range(config.RESOLUCIÓN):
-    for j in range(config.RESOLUCIÓN):
-        if mask[i,j]:
-            lat = Lat[i,j]
-            lon = Lon[i,j]
-            lista_lat.append(lat)
-            lista_lon.append(lon)
-
-Lat , Lon         = np.array(lista_lat) , np.array(lista_lon)
+Lat , Lon         = np.array(Lat) , np.array(Lon)
 coordenadas_mask  = np.stack([Lat,Lon],axis=1)
 
 class Chunk:
@@ -54,10 +46,6 @@ class Chunk:
         # Encontramos cuantos batches hay de la banda
         batch_totales = len(días_descarga)
         # Escaneamos batch
-        lista_array = []
-        lista_dqf   = []
-        lista_t     = []
-        lista_coordenadas = []
         for num_batch in range(batch_totales):
             path_batch = f"{config.PATH_PREPROCESADO_GOES}{self.banda}/" + "Batch_" + str(num_batch).zfill(2) + ".h5"
             with h5py.File(path_batch,"r") as batch:
@@ -65,6 +53,7 @@ class Chunk:
                 DQF    = batch["DQF"][()]
                 T      = batch["T"][()]
                 Coordenadas = batch["Coordenadas"][()]
+            
             # Iteramos sobre cada comunidad
             for i in range(self.num_localidades):
                 lat = self.lista_lat[i]

@@ -14,8 +14,7 @@ import config
 import lib.f_generales as general
 
 # Cargamos la configuración.
-Lon, Lat, mask   = config.cargar_mask_espacial()
-dias_descarga    = config.cargar_mask_temporal()
+dias_descarga = config.cargar_mask_temporal()
 
 def descarga_banda_GOES(banda):
     path_descarga = f"{config.PATH_DESCARGA_GOES}{banda}/"
@@ -44,7 +43,7 @@ def descarga_banda_GOES(banda):
                     banda       = banda           ,
                     output_path = path_batch      )
             except AttributeError as err:
-                print("No se encontraron datos bajo el Scan Mode 3 o 6 del satélite. Omitiendo descarga...")
+                print("No se encontraron datos bajo el Scan Mode 3 o 6 del satélite. Omitiendo descarga...\n")
             
             # Métricas.
             tiempo = time.time()

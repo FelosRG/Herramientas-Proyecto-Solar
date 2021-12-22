@@ -25,7 +25,7 @@ import lib.f_generales as general
 
 # Cargamos configuración.
 dias_descarga  = config.cargar_mask_temporal()
-Lat, Lon, mask = config.cargar_mask_espacial()
+Lat, Lon       = config.cargar_mask_espacial()
 
 def pre_procesado_GOES(banda):
     
@@ -59,24 +59,22 @@ def pre_procesado_GOES(banda):
             array_DQF   = np.array(nc.variables["DQF"])
 
             # Iteramos sobre cada localidad.
-            for i in range(config.RESOLUCIÓN):
-                for j in range(config.RESOLUCIÓN):
-                    lat , lon = Lat[i,j] , Lon[i,j]
-                    if mask[i,j]:
-                        # Recortamos.
-                        px_x , px_y   = GOES.coordinates2px_GOES(nc , latitud=lat , longitud=lon)
-                        array_datos_V = GOES.cortarYcentrar_GOES(array_datos,px_x,px_y,ventana=config.VENTANA_RECORTE)
-                        array_DQF_V   = GOES.cortarYcentrar_GOES(array_DQF  ,px_x,px_y,ventana=config.VENTANA_RECORTE)
-                        # Agregamos a la lista de guardado.
-                        datos_array.append(np.array(array_datos_V))
-                        datos_DQF.append(np.array(array_DQF_V))
-                        datos_t.append(t)
-                        datos_coordenadas[0].append(lat) , datos_coordenadas[1].append(lon)
-                        # Métricas.
-                        num_datos += 1
-                        
+            for i in range(len(Lat)):
+                lat , lon = Lat[i] , Lon[i]
+                # Recortamos.
+                px_x , px_y   = GOES.coordinates2px_GOES(nc , latitud=lat , longitud=lon)
+                array_datos_V = GOES.cortarYcentrar_GOES(array_datos,px_x,px_y,ventana=config.VENTANA_RECORTE)
+                array_DQF_V   = GOES.cortarYcentrar_GOES(array_DQF  ,px_x,px_y,ventana=config.VENTANA_RECORTE)
+                # Agregamos a la lista de guardado.
+                datos_array.append(np.array(array_datos_V))
+                datos_DQF.append(np.array(array_DQF_V))
+                datos_t.append(t)
+                datos_coordenadas[0].append(lat) , datos_coordenadas[1].append(lon)
+                # Métricas.
+                num_datos += 1
             # Cerramos netCDF
             nc.close()
+        
         # Guardamos batch.
         nombre_batch = "Batch_" + str(num_batch).zfill(2) + ".h5"
         config.guardar_batch(datos_array,datos_DQF,datos_t,datos_coordenadas,banda,nombre_batch,path=config.PATH_PREPROCESADO_GOES)
@@ -88,7 +86,6 @@ def pre_procesado_GOES(banda):
         t_f = time.time()
         t_trans = round((t_f-t_o)/60,1)
         print(f"Tiempo transcurrido {t_trans} min\n")
-    print("Pre-procesado terminado!")
 
 if __name__ == "__main__":
     texto = """
@@ -99,4 +96,6 @@ SCRIPT DE PREPROCESADO
     print(texto)
     print("Iniciando preprocesado de los datos descargados...")
     for banda in config.BANDAS:
+        print(f"Procesando datos de la banda {banda}...\n")
         pre_procesado_GOES(banda)
+    print("Pre-procesado terminado!")
