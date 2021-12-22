@@ -58,13 +58,15 @@ def pre_procesado_GOES(banda):
             array_datos = np.array(nc.variables[config.VARIABLE])
             array_DQF   = np.array(nc.variables["DQF"])
 
+            recorte = int(config.VENTANA_RECORTE/config.resolución_bandas[banda])
+
             # Iteramos sobre cada localidad.
             for i in range(len(Lat)):
                 lat , lon = Lat[i] , Lon[i]
                 # Recortamos.
                 px_x , px_y   = GOES.coordinates2px_GOES(nc , latitud=lat , longitud=lon)
-                array_datos_V = GOES.cortarYcentrar_GOES(array_datos,px_x,px_y,ventana=config.VENTANA_RECORTE)
-                array_DQF_V   = GOES.cortarYcentrar_GOES(array_DQF  ,px_x,px_y,ventana=config.VENTANA_RECORTE)
+                array_datos_V = GOES.cortarYcentrar_GOES(array_datos,px_x,px_y,ventana=recorte)
+                array_DQF_V   = GOES.cortarYcentrar_GOES(array_DQF  ,px_x,px_y,ventana=recorte)
                 # Agregamos a la lista de guardado.
                 datos_array.append(np.array(array_datos_V))
                 datos_DQF.append(np.array(array_DQF_V))
