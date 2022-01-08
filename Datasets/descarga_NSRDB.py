@@ -37,35 +37,33 @@ CONFIGURACIÓN:
 
 # Cargamos los datos de la configuración
 print("Cargando archivo de configuración...")
-Lat, Lon , mask = config.cargar_mask_espacial()
+Lat, Lon = config.cargar_mask_espacial()
 
-por_descargar = np.sum(mask)
+por_descargar = len(Lat)
 descargados   = 0
 
 print("Iniciando descarga de los datos...")
-for i in range(config.RESOLUCIÓN):
-    for j in range(config.RESOLUCIÓN):
-        if mask[i,j]:
-            lat , lon = Lat[i,j] , Lon[i,j]
-            # Asignamos un nombre al archivo.
-            nombre_archivo_guardado = general.asignarNombreArchivo(lat=lat,lon=lon)
-            # Si el archivo ya está descargado, saltamos.
-            if Path(PATH_DESCARGA_NSRDB + nombre_archivo_guardado).is_file():
-                descargados += 1
-                continue
-            # Bucle de descarga...
-            descarga_correcta = False
-            while descarga_correcta == False:
-                try:
-                    df_data = NSRDB.getData(lat=lat,lon=lon,year=config.AÑO_DATOS,intervalo=5,UTC=True)
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    print("Hubo un error en la descarga, repitiendo.")
-                else:
-                    df_data.to_csv(PATH_DESCARGA_NSRDB + nombre_archivo_guardado)
-                    descargados += 1
-                    descarga_correcta = True
-                    print(f"Descargados {descargados} de {por_descargar}")
+for i in range(por_descargar):
+    lat , lon = Lat[i] , Lon[i]
+    # Asignamos un nombre al archivo.
+    nombre_archivo_guardado = general.asignarNombreArchivo(lat=lat,lon=lon)
+    # Si el archivo ya está descargado, saltamos.
+    if Path(PATH_DESCARGA_NSRDB + nombre_archivo_guardado).is_file():
+        descargados += 1
+        continue
+    # Bucle de descarga...
+    descarga_correcta = False
+    while descarga_correcta == False:
+        try:
+            df_data = NSRDB.getData(lat=lat,lon=lon,year=config.AÑO_DATOS,intervalo=5,UTC=True)
+        except KeyboardInterrupt:
+            raise
+        except:
+            print("Hubo un error en la descarga, repitiendo.")
+        else:
+            df_data.to_csv(PATH_DESCARGA_NSRDB + nombre_archivo_guardado)
+            descargados += 1
+            descarga_correcta = True
+            print(f"Descargados {descargados} de {por_descargar}")
 
 print("Descarga finalizada!")
