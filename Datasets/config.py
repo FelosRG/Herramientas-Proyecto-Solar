@@ -126,11 +126,7 @@ clasificación_bandas = {
 FLAGS_GOES = [2,3,4]
 
 
-
 # AJUSTES DE LA CONFIGURACIÓN ----------------------------------------
-
-# Pasamos de Km a pixeles, (tomando como referencia la resolución de 2k)
-VENTANA_RECORTE = int(VENTANA_RECORTE / 2)
 
 def cargar_mask_espacial():
     """

@@ -372,28 +372,28 @@ def cortarYcentrar_GOES(topo,x,y ,ventana=200):
     
     # Revisa que se respete los límites de la imágen.
     lim_izquierdo = max(x-ventana,0)
-    lim_derecho   = min(x+ventana,topo.shape[1])
-    lim_inferior = max(y-ventana,0)
-    lim_superior = min(y+ventana,topo.shape[0])
+    lim_derecho   = min(x+ventana+1,topo.shape[1])
+    lim_inferior  = max(y-ventana,0)
+    lim_superior  = min(y+ventana+1,topo.shape[0])
     
     mensaje_aviso = "!! Aviso : Se ha alcanzado los límites de la imágen en el recorte, el resultado ya no será un array cuadrado."
     if lim_izquierdo == 0:
-        lim_derecho = lim_izquierdo + ventana
+        lim_derecho = lim_izquierdo + ventana + 1
         print(mensaje_aviso)
         
     if lim_derecho == topo.shape[1]:
         lim_izquierdo = lim_derecho - ventana
         print(mensaje_aviso)
     if lim_inferior == 0:
-        lim_superior = lim_inferior + ventana
+        lim_superior = lim_inferior + ventana + 1
         print(mensaje_aviso)
     if lim_superior == topo.shape[0]:
         lim_inferior == lim_superior - ventana
         print(mensaje_aviso)
     if len(topo.shape) == 3:
-    	array = topo[ lim_inferior:lim_superior ,lim_izquierdo:lim_derecho,:]
+        array = topo[ lim_inferior:lim_superior ,lim_izquierdo:lim_derecho,:]
     else:
-    	array = topo[ lim_inferior:lim_superior ,lim_izquierdo:lim_derecho]
+        array = topo[ lim_inferior:lim_superior ,lim_izquierdo:lim_derecho]
     return array
 
 def recorteYplot_GOES(array,centro_px,centro_py,ventana=200,contraste=5,cmap="gray",dir_guardado=""):
