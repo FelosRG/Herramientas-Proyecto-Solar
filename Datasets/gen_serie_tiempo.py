@@ -111,7 +111,7 @@ def procesar_batch(lat,lon):
                 lista_datos_serie.append(dato)
             
             datos_GOES[str(banda)] = np.concatenate(lista_datos_serie,axis=1) # --> datos_GOES[str(banda)][indice_serie][indice_momento][0:array 1:DQF][x][y]
-            
+            print(datos_GOES[str(banda)].shape)
     
     except IndexError as err:
         mensaje_error = f"""
