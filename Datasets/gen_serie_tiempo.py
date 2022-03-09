@@ -3,10 +3,10 @@
 # ---------------
 
 # Datos satélitales que conformarán el dataset final.
-BANDAS  = [11,13,16] # --> Bandas que conformarán el dataset.
+BANDAS  = [13,14] # --> Bandas que conformarán el dataset.
 
 # Configuración de sincronización
-LONGITUD_SECUENCIA    = 1  
+LONGITUD_SECUENCIA    = 4  
 UMBRAL_SINCRONIZACIÓN = 4  # minutos (recomendado 2).
 UMBRAL_SERIE          = 7  # minutos (recomendado 7), se ignora si LONGITUD_SECUENCIA = 1. 
 
@@ -146,10 +146,9 @@ Shape serie_tiempo: {np.array(serie_tiempo).shape}
     
     # Extraemos datos válidos.
     for banda in BANDAS:
-        for j in range(LONGITUD_SECUENCIA):
-            datos = datos_GOES[str(banda)][:,:,0,:,:] # Le quitamos el array de DQF en los datos.
-            datos = datos[indices_validos,:,:,:]
-            datos_GOES[str(banda)] = datos
+        datos = datos_GOES[str(banda)][:,:,0,:,:] # Le quitamos el array de DQF en los datos.
+        datos = datos[indices_validos,:,:,:]
+        datos_GOES[str(banda)] = datos
 
     return datos_GOES
 
@@ -188,7 +187,6 @@ SCRIPT DE GENERACIÓN DE DATASETS
             batch_datos_GOES  = procesar_batch(lat,lon)
         except IndexError as err:
             print(f"Durante el procesamiento del batch en {lat} {lon} ha ocurrido el siguiente error:\n{err}")
-            raise
         else:
             if UNIR_BATCHES:
                 # Juntamos todo en un diccionario.
