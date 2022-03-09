@@ -50,7 +50,7 @@ class Sincronizador:
         else:
             # Si no se cumplieron los umbrales se adelanta un valor el índice de referencia.
             self.indices_sincronizacion[indice_fecha_vieja] += 1
-            return None
+            return None , None
 
     def _sincronizar(self,umbral):
         lista_indice = None
