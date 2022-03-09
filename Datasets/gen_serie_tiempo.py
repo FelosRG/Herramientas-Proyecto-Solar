@@ -206,11 +206,7 @@ SCRIPT DE GENERACIÓN DE DATASETS
     nombre_dataset_final =  config.PATH_DATASET_FINAL +  nombre_dataset()
     with h5py.File(nombre_dataset_final,"w") as dataset:
         for banda in BANDAS:
-            datos_GOES[str(banda)] = np.concatenate(datos_GOES[str(banda)],axis=1) # Concatenamos en el axis del índice momento.
-
-            # Corregimos orden de los axis del array
-            datos_GOES[str(banda)] = np.moveaxis(datos_GOES[str(banda)],1,0)
-
+            datos_GOES[str(banda)] = np.concatenate(datos_GOES[str(banda)],axis=0) # Concatenamos en el axis del índice momento.
             dataset.create_dataset(name=str(banda),data=datos_GOES[str(banda)],dtype=np.float32)
 
 
