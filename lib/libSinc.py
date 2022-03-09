@@ -34,45 +34,87 @@ class Sincronizador:
         # Obtenemos el datetime más antiguo.
         fecha_mas_vieja = min(lista_datetime_sinc)
         # Obtenemos los desfaces.
-        lista_desfaces = np.array([abs((fecha - fecha_mas_vieja).total_seconds()) for fecha in lista_datetime_sinc])
+        lista_desfaces     = np.array([abs((fecha - fecha_mas_vieja).total_seconds()) for fecha in lista_datetime_sinc])
         indice_fecha_vieja = np.argmin(lista_desfaces)
 
         self.iteraciones += 1
-
-        # Tomar en cuenta de programar para los index errors.
 
         # Comparamos los desfaces.
         if np.max(lista_desfaces) <= umbral:
             # Si los desfaces estan dentro del umbral retornamos y avanzamos indices.
             lista_indices = np.copy(self.indices_sincronizacion)
             self.indices_sincronizacion += 1
-            return list(lista_indices)
+
+            # Retornamos la lista de indices del momento generado con su fecha de referecia.
+            return list(lista_indices) , fecha_mas_vieja
         else:
-            # Si no hacemos sincronización adelantamos un índice y hacemos recursión.
+            # Si no se cumplieron los umbrales se adelanta un valor el índice de referencia.
             self.indices_sincronizacion[indice_fecha_vieja] += 1
             return None
 
     def _sincronizar(self,umbral):
         lista_indice = None
         while type(lista_indice) == type(None):
-            lista_indice = self._buscador(umbral)
-        return lista_indice
-            
-
+            lista_indice , fecha_momento = self._buscador(umbral)
+        return lista_indice , fecha_momento
+    
     def generarSerieTiempo(self,umbral_sinc,umbral_serie=None,longitud=1):
-        lista_series_tiempo = []
-        # Obtenemos todos los momentos del sincronizador.
-        lista_momentos = []
-        while True:
-            try:
-                momento = self._sincronizar(umbral_sinc)
-                lista_momentos.append(momento)
-            except IndexError:
-                break
         if longitud == 1:
+            lista_momentos = []
+            while True:
+                try:
+                    momento , _ = self._sincronizar(umbral_sinc)
+                    lista_momentos.append([momento])
+                except IndexError:
+                    break
             return lista_momentos
-        else:
-            raise NotImplementedError("Aun no creo el código para series de tiemmpo mayores a 1.")
+        
+        if longitud > 1:
+            lista_estados_momentos = []
+            lista_momentos = []
+            index_momentos = 0
+
+            # Iniciamos con un momento.
+            momento , fecha_momento = self._sincronizar(umbral_sinc)
+            lista_momentos.append(momento)
+            lista_estados_momentos.append(False)
+            index_momentos += 1
+
+            while True:
+                try:
+                    
+                    momento , fecha_momento_nuevo = self._sincronizar(umbral_sinc)
+                    lista_momentos.append(momento)
+                    index_momentos += 1
+                    # Vemos si se cumple el umbra de serie de tiempo.
+                    if (fecha_momento_nuevo - fecha_momento).total_seconds() <= umbral_serie:
+                        lista_estados_momentos.append(True)
+                    else:
+                        lista_estados_momentos.append(False)
+                    
+                    # Intercambiamos nombres para seguir con el bucle.
+                    fecha_momento = fecha_momento_nuevo
+                
+                except IndexError:
+                    break
+
+            # Para este punto tenemos una lista de momentos y una lista de estados de momento.
+            # Lo siguiente es formar las secuencias.
+            lista_series_de_tiempo = []
+            for i in range(len(lista_momentos) - longitud - 1):
+
+                # Almacenamos los estados de los (longitud - 1) momentos siguientes.
+                serie_tiempo_estados = np.array(lista_estados_momentos[i+1:i+longitud])
+
+                # Si todos son true, entonces tenemos una serie de tiempo!
+                if np.sum(serie_tiempo_estados) == longitud - 1:
+                    serie_tiempo = lista_momentos[i:i+longitud]
+                    lista_series_de_tiempo.append(serie_tiempo)
+        
+            return lista_series_de_tiempo
+                
+
+
 
 
 
